@@ -1,0 +1,89 @@
+import { Link } from 'react-router-dom';
+import { ShoppingBag, Search, User, Menu, X, Heart } from 'lucide-react';
+import { useCartStore } from '@/stores/cartStore';
+import { useState } from 'react';
+
+const navLinks = [
+  { to: '/tools', label: 'Tools' },
+  { to: '/stencils', label: 'Stencils' },
+  { to: '/svg', label: 'SVG Files' },
+  { to: '/blog', label: 'Blog' },
+];
+
+export default function Header() {
+  const totalItems = useCartStore((s) => s.totalItems());
+  const toggleCart = useCartStore((s) => s.toggleCart);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <header className="sticky top-0 z-50 bg-card border-b border-border">
+      <div className="container-page flex items-center justify-between h-16">
+        {/* Logo */}
+        <Link to="/" className="text-xl font-semibold tracking-tight text-foreground">
+          DIY<span className="text-accent">Stencil</span>
+        </Link>
+
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-8">
+          {navLinks.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Right icons */}
+        <div className="flex items-center gap-4">
+          <button className="hidden md:block text-muted-foreground hover:text-foreground transition-colors">
+            <Search size={20} />
+          </button>
+          <Link to="/freebie" className="hidden md:block">
+            <Heart size={20} className="text-muted-foreground hover:text-accent transition-colors" />
+          </Link>
+          <Link to="/login" className="hidden md:block">
+            <User size={20} className="text-muted-foreground hover:text-foreground transition-colors" />
+          </Link>
+          <button onClick={toggleCart} className="relative text-muted-foreground hover:text-foreground transition-colors">
+            <ShoppingBag size={20} />
+            {totalItems > 0 && (
+              <span className="absolute -top-2 -right-2 w-5 h-5 bg-accent text-accent-foreground text-[10px] font-semibold rounded-full flex items-center justify-center">
+                {totalItems}
+              </span>
+            )}
+          </button>
+          <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-border bg-card animate-fade-in">
+          <nav className="container-page py-4 flex flex-col gap-4">
+            {navLinks.map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="text-sm text-foreground py-2"
+                onClick={() => setMobileOpen(false)}
+              >
+                {l.label}
+              </Link>
+            ))}
+            <Link to="/freebie" className="text-sm text-accent font-medium py-2" onClick={() => setMobileOpen(false)}>
+              Free SVG ✨
+            </Link>
+            <Link to="/login" className="text-sm text-foreground py-2" onClick={() => setMobileOpen(false)}>
+              Account
+            </Link>
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}
