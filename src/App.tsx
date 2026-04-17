@@ -6,7 +6,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import Index from "./pages/Index";
+import ContactPage from "./pages/ContactPage";
+import FaqPage from "./pages/FaqPage";
+import ShippingPage from "./pages/ShippingPage";
+import ReturnsPage from "./pages/ReturnsPage";
+import AboutPage from "./pages/AboutPage";
 import ToolsPage from "./pages/ToolsPage";
 import StencilsPage from "./pages/StencilsPage";
 import SvgPage from "./pages/SvgPage";
@@ -40,10 +46,16 @@ const App = () => (
             <Route path="/freebie" element={<FreebiePage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/faq" element={<FaqPage />} />
+            <Route path="/shipping" element={<ShippingPage />} />
+            <Route path="/returns" element={<ReturnsPage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
         <Footer />
+        <WhatsAppButton />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
