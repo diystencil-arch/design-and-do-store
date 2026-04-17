@@ -25,10 +25,11 @@ export default function Footer() {
           <div>
             <h4 className="text-sm font-medium text-foreground mb-3">Support</h4>
             <div className="flex flex-col gap-2">
-              <span className="text-sm text-muted-foreground">Contact Us</span>
-              <span className="text-sm text-muted-foreground">FAQs</span>
-              <span className="text-sm text-muted-foreground">Shipping Info</span>
-              <span className="text-sm text-muted-foreground">Returns</span>
+              <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contact Us</Link>
+              <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQs</Link>
+              <Link to="/shipping" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Shipping Info</Link>
+              <Link to="/returns" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Returns &amp; Refunds</Link>
+              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About Us</Link>
             </div>
           </div>
           <div>
