@@ -22,24 +22,30 @@ import CheckoutPage from "./pages/CheckoutPage";
 import FreebiePage from "./pages/FreebiePage";
 import BlogPage from "./pages/BlogPage";
 import LoginPage from "./pages/LoginPage";
+import WoodPage from "./pages/WoodPage";
+import AcrylicPage from "./pages/AcrylicPage";
 import NotFound from "./pages/NotFound";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Header />
-        <CartDrawer />
-        <main className="min-h-[60vh]">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/tools" element={<ToolsPage />} />
-            <Route path="/stencils" element={<StencilsPage />} />
-            <Route path="/svg" element={<SvgPage />} />
+    <CurrencyProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Header />
+          <CartDrawer />
+          <main className="min-h-[60vh]">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/tools" element={<ToolsPage />} />
+              <Route path="/stencils" element={<StencilsPage />} />
+              <Route path="/wood" element={<WoodPage />} />
+              <Route path="/acrylic" element={<AcrylicPage />} />
+              <Route path="/svg" element={<SvgPage />} />
             <Route path="/product/:slug" element={<ProductDetailPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
@@ -57,7 +63,8 @@ const App = () => (
         <Footer />
         <WhatsAppButton />
       </BrowserRouter>
-    </TooltipProvider>
+      </TooltipProvider>
+    </CurrencyProvider>
   </QueryClientProvider>
 );
 
