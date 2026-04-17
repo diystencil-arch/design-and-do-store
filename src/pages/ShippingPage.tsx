@@ -8,7 +8,8 @@ export default function ShippingPage() {
         <h1 className="mt-2 text-4xl md:text-5xl font-bold text-foreground">Shipping information</h1>
         <p className="mt-4 text-muted-foreground leading-relaxed">
           We ship from Kitchener, Ontario, Canada to customers worldwide. All physical orders are carefully
-          packaged to arrive flat and undamaged.
+          packaged to arrive flat and undamaged. <strong className="text-foreground">All prices are in CAD</strong> and
+          will be auto-converted to your local currency for display based on your location.
         </p>
       </header>
 
@@ -31,42 +32,17 @@ export default function ShippingPage() {
       {/* Rates */}
       <section className="mt-12">
         <h2 className="text-2xl font-bold text-foreground">Shipping rates</h2>
-        <div className="mt-4 overflow-hidden rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/50 text-foreground">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold">Destination</th>
-                <th className="px-4 py-3 text-left font-semibold">Standard</th>
-                <th className="px-4 py-3 text-left font-semibold">Tracked</th>
-                <th className="px-4 py-3 text-left font-semibold">Free shipping over</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border bg-card text-muted-foreground">
-              <tr>
-                <td className="px-4 py-3 text-foreground font-medium">Canada</td>
-                <td className="px-4 py-3">CA$4.99</td>
-                <td className="px-4 py-3">CA$8.99</td>
-                <td className="px-4 py-3">CA$50</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 text-foreground font-medium">United States</td>
-                <td className="px-4 py-3">CA$6.99</td>
-                <td className="px-4 py-3">CA$12.99</td>
-                <td className="px-4 py-3">CA$75</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-3 text-foreground font-medium">International</td>
-                <td className="px-4 py-3">CA$14.99</td>
-                <td className="px-4 py-3">CA$24.99</td>
-                <td className="px-4 py-3">CA$120</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          Rates calculated at checkout based on destination and weight. Customers are responsible for any
-          customs duties or import taxes.
+        <p className="mt-2 text-muted-foreground">
+          Calculated at checkout based on destination, weight and package size. Live rates are pulled from
+          Canada Post and major couriers — you'll see the exact cost before you pay.
         </p>
+        <div className="mt-4 rounded-lg border border-border bg-card p-5">
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">No flat rates and no free-shipping thresholds.</strong> We
+            charge actual shipping cost only — no markup. Customers are responsible for any customs duties
+            or import taxes on international orders.
+          </p>
+        </div>
       </section>
 
       {/* Policies */}
@@ -74,9 +50,9 @@ export default function ShippingPage() {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Order processing</h2>
           <p className="mt-3 text-muted-foreground leading-relaxed">
-            Standard stencils ship within 1–3 business days. Custom and personalized orders typically take 3–5
-            business days to produce before shipping. You'll receive a tracking email as soon as your package
-            is on its way.
+            Standard stencils ship within 1–3 business days. Custom and personalized orders, wood cutouts
+            and acrylic cutouts typically take 3–5 business days to produce before shipping. You'll receive
+            a tracking email as soon as your package is on its way.
           </p>
         </div>
 

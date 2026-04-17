@@ -63,7 +63,8 @@ const App = () => (
         <Footer />
         <WhatsAppButton />
       </BrowserRouter>
-    </TooltipProvider>
+      </TooltipProvider>
+    </CurrencyProvider>
   </QueryClientProvider>
 );
 
