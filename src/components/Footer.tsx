@@ -1,14 +1,38 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Facebook, Youtube } from 'lucide-react';
+// lucide-react does not export brand icons; use inline SVGs below
 
 const socials = [
-  { href: 'https://www.instagram.com/diystencil', label: 'Instagram', icon: Instagram },
+  { href: 'https://www.instagram.com/diystencil', label: 'Instagram', icon: InstagramIcon },
   { href: 'https://www.tiktok.com/@diystencil', label: 'TikTok', icon: TiktokIcon },
-  { href: 'https://www.youtube.com/@diystencil', label: 'YouTube', icon: Youtube },
-  { href: 'https://www.facebook.com/diystencil', label: 'Facebook', icon: Facebook },
+  { href: 'https://www.youtube.com/@diystencil', label: 'YouTube', icon: YoutubeIcon },
+  { href: 'https://www.facebook.com/diystencil', label: 'Facebook', icon: FacebookIcon },
   { href: 'https://www.pinterest.com/diystencil', label: 'Pinterest', icon: PinterestIcon },
   { href: 'https://www.etsy.com/ca/shop/diystencilca', label: 'Etsy', icon: EtsyIcon },
 ];
+
+function InstagramIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function FacebookIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M13.5 22v-8h2.7l.4-3.2h-3.1V8.7c0-.9.3-1.6 1.6-1.6h1.7V4.2c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.4H7.4V14h2.7v8h3.4z" />
+    </svg>
+  );
+}
+function YoutubeIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M23 7.2s-.2-1.6-.9-2.3c-.8-.9-1.8-.9-2.2-1C16.7 3.6 12 3.6 12 3.6s-4.7 0-7.9.3c-.4.1-1.4.1-2.2 1C1.2 5.6 1 7.2 1 7.2S.7 9 .7 10.9v1.7c0 1.9.3 3.7.3 3.7s.2 1.6.9 2.3c.8.9 1.9.9 2.4 1 1.7.2 7.7.3 7.7.3s4.7 0 7.9-.3c.4-.1 1.4-.1 2.2-1 .7-.7.9-2.3.9-2.3s.3-1.8.3-3.7v-1.7c0-1.9-.3-3.7-.3-3.7zM9.7 14.6V8.4l6.1 3.1-6.1 3.1z" />
+    </svg>
+  );
+}
 
 function TiktokIcon({ size = 18 }: { size?: number }) {
   return (

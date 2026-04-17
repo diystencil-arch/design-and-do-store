@@ -12,8 +12,8 @@ export default function ReturnsPage() {
         </p>
       </header>
 
-      <div className="mt-8 rounded-lg border border-amber-300/40 bg-amber-50/40 dark:bg-amber-950/20 p-5 flex gap-3">
-        <AlertTriangle className="text-amber-600 shrink-0 mt-0.5" size={20} />
+      <div className="mt-8 rounded-lg border border-primary/30 bg-primary/5 p-5 flex gap-3">
+        <AlertTriangle className="text-primary shrink-0 mt-0.5" size={20} />
         <div>
           <h3 className="font-semibold text-foreground">No-returns policy</h3>
           <p className="mt-1 text-sm text-muted-foreground">
