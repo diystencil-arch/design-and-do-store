@@ -79,7 +79,7 @@ export default function Index() {
                     <img src={p.images[0]} alt={p.title} className="w-10 h-10 rounded-md object-cover bg-muted" />
                     <div className="text-left">
                       <p className="text-sm font-medium text-foreground">{p.title}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{p.type} · £{p.price.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{p.type} · ${p.price.toFixed(2)}</p>
                     </div>
                   </Link>
                 ))}

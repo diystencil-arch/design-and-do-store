@@ -54,9 +54,19 @@ export default function AboutPage() {
             within 24 hours. Whether it's a single wedding cake stencil or a wholesale order for your bakery
             or business, we love bringing personalized projects to life.
           </p>
-          <Link to="/contact" className="mt-4 inline-flex items-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
-            Request a custom order →
-          </Link>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link to="/contact" className="inline-flex items-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+              Request a custom order →
+            </Link>
+            <a
+              href="https://www.etsy.com/shop/diystencilca"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md border border-[#F1641E] bg-[#F1641E]/5 px-5 py-2.5 text-sm font-semibold text-[#F1641E] hover:bg-[#F1641E]/10"
+            >
+              Visit our Etsy shop →
+            </a>
+          </div>
         </div>
 
         <div>
