@@ -1,8 +1,8 @@
 import ProductCard from '@/components/ProductCard';
-import { getProductsByType } from '@/data/products';
+import { useProductsByType } from '@/hooks/useProducts';
 
 export default function ToolsPage() {
-  const products = getProductsByType('affiliate');
+  const { products, loading } = useProductsByType('affiliate');
 
   return (
     <div className="container-page py-10">
@@ -10,11 +10,15 @@ export default function ToolsPage() {
       <p className="text-muted-foreground mb-8 max-w-lg">
         Our hand-picked selection of the best craft tools available on Amazon. We earn a small commission at no extra cost to you.
       </p>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {products.map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
-      </div>
+      {loading ? (
+        <p className="text-muted-foreground">Loading…</p>
+      ) : products.length === 0 ? (
+        <p className="text-muted-foreground">No tools recommended yet — check back soon!</p>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {products.map((p) => <ProductCard key={p.id} product={p} />)}
+        </div>
+      )}
     </div>
   );
 }

@@ -21,50 +21,68 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import FreebiePage from "./pages/FreebiePage";
 import BlogPage from "./pages/BlogPage";
-import LoginPage from "./pages/LoginPage";
+import AuthPage from "./pages/AuthPage";
+import AccountPage from "./pages/AccountPage";
 import WoodPage from "./pages/WoodPage";
 import AcrylicPage from "./pages/AcrylicPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminBlog from "./pages/admin/AdminBlog";
+import AdminMessages from "./pages/admin/AdminMessages";
+import AdminSubscribers from "./pages/admin/AdminSubscribers";
 import NotFound from "./pages/NotFound";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <CurrencyProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Header />
-          <CartDrawer />
-          <main className="min-h-[60vh]">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/tools" element={<ToolsPage />} />
-              <Route path="/stencils" element={<StencilsPage />} />
-              <Route path="/wood" element={<WoodPage />} />
-              <Route path="/acrylic" element={<AcrylicPage />} />
-              <Route path="/svg" element={<SvgPage />} />
-            <Route path="/product/:slug" element={<ProductDetailPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/freebie" element={<FreebiePage />} />
-            <Route path="/blog" element={<BlogPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/faq" element={<FaqPage />} />
-            <Route path="/shipping" element={<ShippingPage />} />
-            <Route path="/returns" element={<ReturnsPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-        <Footer />
-        <WhatsAppButton />
-      </BrowserRouter>
-      </TooltipProvider>
-    </CurrencyProvider>
+    <AuthProvider>
+      <CurrencyProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Header />
+            <CartDrawer />
+            <main className="min-h-[60vh]">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/tools" element={<ToolsPage />} />
+                <Route path="/stencils" element={<StencilsPage />} />
+                <Route path="/wood" element={<WoodPage />} />
+                <Route path="/acrylic" element={<AcrylicPage />} />
+                <Route path="/svg" element={<SvgPage />} />
+                <Route path="/product/:slug" element={<ProductDetailPage />} />
+                <Route path="/cart" element={<CartPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/freebie" element={<FreebiePage />} />
+                <Route path="/blog" element={<BlogPage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/account" element={<AccountPage />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/products" element={<AdminProducts />} />
+                <Route path="/admin/orders" element={<AdminOrders />} />
+                <Route path="/admin/blog" element={<AdminBlog />} />
+                <Route path="/admin/messages" element={<AdminMessages />} />
+                <Route path="/admin/subscribers" element={<AdminSubscribers />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/faq" element={<FaqPage />} />
+                <Route path="/shipping" element={<ShippingPage />} />
+                <Route path="/returns" element={<ReturnsPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+            <Footer />
+            <WhatsAppButton />
+          </BrowserRouter>
+        </TooltipProvider>
+      </CurrencyProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
