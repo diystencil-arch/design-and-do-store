@@ -98,6 +98,24 @@ export default function ContactPage() {
               </div>
             </div>
           </div>
+
+          <a
+            href="https://www.etsy.com/shop/diystencilca"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F1641E]/10 text-[#F1641E] font-bold text-lg">
+                E
+              </span>
+              <div>
+                <h3 className="font-semibold text-foreground">Visit our Etsy shop</h3>
+                <p className="mt-1 text-sm text-muted-foreground">125,800+ sales · 4.9★ rating</p>
+                <p className="mt-1 text-xs text-primary font-medium">Shop on Etsy →</p>
+              </div>
+            </div>
+          </a>
         </aside>
 
         {/* Form */}
