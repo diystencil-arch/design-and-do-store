@@ -1,6 +1,7 @@
 import { Mail, MessageCircle, MapPin, Clock, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const EMAIL = 'diystencil@gmail.com';
 const WHATSAPP = '15197818540';
@@ -11,18 +12,30 @@ export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [sending, setSending] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSending(true);
-    const body = encodeURIComponent(
-      `Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`
-    );
-    const subject = encodeURIComponent(form.subject || 'Inquiry from DIY Stencil website');
-    window.location.href = `mailto:${EMAIL}?subject=${subject}&body=${body}`;
-    setTimeout(() => {
+    try {
+      // 1. Save to database (RLS allows anyone to insert)
+      const { error: dbErr } = await supabase.from('contact_messages').insert({
+        name: form.name,
+        email: form.email,
+        subject: form.subject,
+        message: form.message,
+        user_agent: navigator.userAgent,
+      });
+      if (dbErr) throw dbErr;
+
+      // 2. Trigger email notification (best-effort, don't block on failure)
+      supabase.functions.invoke('send-contact-email', { body: form }).catch(() => {});
+
+      toast({ title: 'Message sent!', description: "Thanks — we'll reply within 24 hours." });
+      setForm({ name: '', email: '', subject: '', message: '' });
+    } catch (err: any) {
+      toast({ title: 'Could not send', description: err.message || 'Please try emailing us directly.', variant: 'destructive' });
+    } finally {
       setSending(false);
-      toast({ title: 'Opening your email app', description: 'If nothing happens, please email us directly at ' + EMAIL });
-    }, 600);
+    }
   };
 
   return (
@@ -175,11 +188,11 @@ export default function ContactPage() {
             disabled={sending}
             className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
-            <Send size={16} /> {sending ? 'Opening…' : 'Send message'}
+            <Send size={16} /> {sending ? 'Sending…' : 'Send message'}
           </button>
           <p className="text-xs text-muted-foreground">
-            This will open your email app. You can also email us directly at{' '}
-            <a href={`mailto:${EMAIL}`} className="text-primary underline">{EMAIL}</a>.
+            Your message is delivered to{' '}
+            <a href={`mailto:${EMAIL}`} className="text-primary underline">{EMAIL}</a> and saved in our admin inbox.
           </p>
         </form>
       </div>

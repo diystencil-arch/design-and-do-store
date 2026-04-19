@@ -1,15 +1,19 @@
 import { ReactNode } from 'react';
 import { NavLink, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Package, ShoppingBag, FileText, Mail, Users } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, FileText, Mail, Users, BarChart3, Megaphone, Wallet, HelpCircle } from 'lucide-react';
 
 const links = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/products', label: 'Products', icon: Package },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
-  { to: '/admin/blog', label: 'Blog', icon: FileText },
   { to: '/admin/messages', label: 'Messages', icon: Mail },
+  { to: '/admin/stats', label: 'Stats', icon: BarChart3 },
+  { to: '/admin/marketing', label: 'Marketing', icon: Megaphone },
+  { to: '/admin/finances', label: 'Finances', icon: Wallet },
+  { to: '/admin/blog', label: 'Blog', icon: FileText },
   { to: '/admin/subscribers', label: 'Subscribers', icon: Users },
+  { to: '/admin/help', label: 'Help', icon: HelpCircle },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

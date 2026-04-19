@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Search, User, Menu, X, Heart } from 'lucide-react';
+import { ShoppingBag, Search, User, Menu, X, Heart, MessageCircle } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useState } from 'react';
 
@@ -11,6 +11,8 @@ const navLinks = [
   { to: '/svg', label: 'SVG Files' },
   { to: '/blog', label: 'Blog' },
 ];
+
+const CUSTOM_ORDER_WA = 'https://wa.me/15197818540?text=' + encodeURIComponent('Hi! I would like to place a custom order. Here are the details:');
 
 export default function Header() {
   const totalItems = useCartStore((s) => s.totalItems());
@@ -39,7 +41,15 @@ export default function Header() {
         </nav>
 
         {/* Right icons */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
+          <a
+            href={CUSTOM_ORDER_WA}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#25D366] text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+          >
+            <MessageCircle size={14} /> Custom Order
+          </a>
           <Link to="/freebie" className="hidden md:block">
             <Heart size={20} className="text-muted-foreground hover:text-primary transition-colors" />
           </Link>
@@ -74,6 +84,15 @@ export default function Header() {
                 {l.label}
               </Link>
             ))}
+            <a
+              href={CUSTOM_ORDER_WA}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#25D366] py-2"
+              onClick={() => setMobileOpen(false)}
+            >
+              <MessageCircle size={16} /> Custom Order on WhatsApp
+            </a>
             <Link to="/freebie" className="text-sm text-primary font-medium py-2" onClick={() => setMobileOpen(false)}>
               Free SVG ✨
             </Link>
