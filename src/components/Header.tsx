@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Search, User, Menu, X, Heart } from 'lucide-react';
+import { ShoppingBag, Search, User, Menu, X, Heart, MessageCircle } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useState } from 'react';
 
@@ -11,6 +11,8 @@ const navLinks = [
   { to: '/svg', label: 'SVG Files' },
   { to: '/blog', label: 'Blog' },
 ];
+
+const CUSTOM_ORDER_WA = 'https://wa.me/15197818540?text=' + encodeURIComponent('Hi! I would like to place a custom order. Here are the details:');
 
 export default function Header() {
   const totalItems = useCartStore((s) => s.totalItems());
