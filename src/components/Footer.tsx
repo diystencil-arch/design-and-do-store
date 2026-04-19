@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const socials = [
   { href: 'https://www.instagram.com/diystencil', label: 'Instagram', icon: InstagramIcon },
-  { href: 'https://www.tiktok.com/@diystencil', label: 'TikTok', icon: TiktokIcon },
+  { href: 'https://www.tiktok.com/@diystencilca', label: 'TikTok', icon: TiktokIcon },
   { href: 'https://www.youtube.com/@ResinMold', label: 'YouTube', icon: YoutubeIcon },
   { href: 'https://www.facebook.com/diystencil', label: 'Facebook', icon: FacebookIcon },
   { href: 'https://www.pinterest.com/diystencil', label: 'Pinterest', icon: PinterestIcon },

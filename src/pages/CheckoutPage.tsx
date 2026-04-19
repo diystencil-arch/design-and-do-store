@@ -1,12 +1,69 @@
 import { useCartStore } from '@/stores/cartStore';
-import { Lock, CreditCard } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Lock } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+
+declare global { interface Window { paypal?: any } }
+
+const PAYPAL_CLIENT_ID = 'AUNxuurZ1NbsnZKRdzPF4KJrztGvlEYvQFaO1JelHsQXbvJsyY6sXSoejlANuBovlPI__6D4luSYFUya';
 
 export default function CheckoutPage() {
-  const { items, subtotal } = useCartStore();
-  const [paymentTab, setPaymentTab] = useState<'card' | 'paypal'>('card');
+  const { items, subtotal, clearCart } = useCartStore();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState(user?.email || '');
+  const [address, setAddress] = useState({ name: '', line1: '', line2: '', city: '', postcode: '' });
+  const [paypalReady, setPaypalReady] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const ppRef = useRef<HTMLDivElement>(null);
   const hasPhysical = items.some((i) => i.type === 'physical');
+
+  useEffect(() => {
+    if (window.paypal) { setPaypalReady(true); return; }
+    const s = document.createElement('script');
+    s.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD&intent=capture`;
+    s.async = true;
+    s.onload = () => setPaypalReady(true);
+    document.body.appendChild(s);
+  }, []);
+
+  useEffect(() => {
+    if (!paypalReady || !ppRef.current || items.length === 0) return;
+    ppRef.current.innerHTML = '';
+    window.paypal.Buttons({
+      style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
+      createOrder: async () => {
+        if (!email) { toast({ title: 'Email required', description: 'Please enter your email first.', variant: 'destructive' }); throw new Error('email'); }
+        const { data, error } = await supabase.functions.invoke('paypal-create-order', {
+          body: { items: items.map(i => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity })), currency: 'USD' },
+        });
+        if (error || !data?.id) throw new Error('Failed to create order');
+        return data.id;
+      },
+      onApprove: async (data: any) => {
+        setProcessing(true);
+        const { data: capData, error } = await supabase.functions.invoke('paypal-capture-order', {
+          body: {
+            paypalOrderId: data.orderID,
+            items: items.map(i => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity, title: i.title })),
+            email,
+            shippingAddress: hasPhysical ? address : null,
+            userId: user?.id || null,
+          },
+        });
+        setProcessing(false);
+        if (error || !capData?.orderId) { toast({ title: 'Payment failed', description: error?.message || 'Try again', variant: 'destructive' }); return; }
+        clearCart();
+        navigate(`/account?order=${capData.orderId}`);
+        toast({ title: 'Order confirmed! 🎉', description: `Confirmation sent to ${email}` });
+      },
+      onError: (err: any) => { console.error(err); toast({ title: 'PayPal error', description: 'Please try again', variant: 'destructive' }); },
+    }).render(ppRef.current);
+  }, [paypalReady, items, email, address, user, hasPhysical]);
 
   if (items.length === 0) {
     return (
@@ -21,94 +78,45 @@ export default function CheckoutPage() {
     <div className="container-page py-10">
       <h1 className="section-heading mb-8">Checkout</h1>
       <div className="grid lg:grid-cols-5 gap-10">
-        {/* Left — form */}
         <div className="lg:col-span-3 space-y-8">
-          {/* Contact */}
           <section>
             <h2 className="text-lg font-medium text-foreground mb-4">Contact</h2>
             <input
               type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
               className="w-full px-4 py-3 border border-border rounded-md text-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             />
-            <label className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
-              <input type="checkbox" className="rounded" />
-              Save my email for updates
-            </label>
           </section>
 
-          {/* Shipping */}
           {hasPhysical && (
             <section>
               <h2 className="text-lg font-medium text-foreground mb-4">Shipping address</h2>
               <div className="grid grid-cols-2 gap-3">
-                <input placeholder="Full name" className="col-span-2 px-4 py-3 border border-border rounded-md text-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent" />
-                <input placeholder="Address line 1" className="col-span-2 px-4 py-3 border border-border rounded-md text-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent" />
-                <input placeholder="Address line 2 (optional)" className="col-span-2 px-4 py-3 border border-border rounded-md text-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent" />
-                <input placeholder="City" className="px-4 py-3 border border-border rounded-md text-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent" />
-                <input placeholder="Postcode" className="px-4 py-3 border border-border rounded-md text-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent" />
+                <input value={address.name} onChange={(e) => setAddress({ ...address, name: e.target.value })} placeholder="Full name" className="col-span-2 px-4 py-3 border border-border rounded-md text-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent" />
+                <input value={address.line1} onChange={(e) => setAddress({ ...address, line1: e.target.value })} placeholder="Address line 1" className="col-span-2 px-4 py-3 border border-border rounded-md text-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent" />
+                <input value={address.line2} onChange={(e) => setAddress({ ...address, line2: e.target.value })} placeholder="Address line 2 (optional)" className="col-span-2 px-4 py-3 border border-border rounded-md text-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent" />
+                <input value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })} placeholder="City" className="px-4 py-3 border border-border rounded-md text-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent" />
+                <input value={address.postcode} onChange={(e) => setAddress({ ...address, postcode: e.target.value })} placeholder="Postcode" className="px-4 py-3 border border-border rounded-md text-sm bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent" />
               </div>
             </section>
           )}
 
-          {/* Payment */}
           <section>
-            <h2 className="text-lg font-medium text-foreground mb-4">How would you like to pay?</h2>
-            <div className="flex gap-3 mb-6">
-              <button
-                onClick={() => setPaymentTab('card')}
-                className={`flex-1 py-3 rounded-md border text-sm font-medium transition-colors ${
-                  paymentTab === 'card'
-                    ? 'border-accent bg-accent/5 text-foreground'
-                    : 'border-border text-muted-foreground hover:border-accent/40'
-                }`}
-              >
-                <CreditCard size={16} className="inline mr-2" />
-                Pay by card
-              </button>
-              <button
-                onClick={() => setPaymentTab('paypal')}
-                className={`flex-1 py-3 rounded-md border text-sm font-medium transition-colors ${
-                  paymentTab === 'paypal'
-                    ? 'border-accent bg-accent/5 text-foreground'
-                    : 'border-border text-muted-foreground hover:border-accent/40'
-                }`}
-              >
-                PayPal
-              </button>
-            </div>
-
-            {paymentTab === 'card' ? (
-              <div className="space-y-4">
-                <div className="border border-border rounded-md p-6 bg-muted/30 text-center text-sm text-muted-foreground">
-                  <CreditCard size={32} className="mx-auto mb-3 text-muted-foreground/50" />
-                  Stripe Payment Element will render here once connected.
-                </div>
-                <button className="btn-primary w-full">
-                  Pay £{subtotal().toFixed(2)} securely →
-                </button>
-                <p className="text-xs text-center text-muted-foreground">
-                  <Lock size={10} className="inline mr-1" />
-                  256-bit SSL encryption · Powered by Stripe
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  You'll be redirected to PayPal to complete your payment.
-                </p>
-                <div className="border border-border rounded-md p-6 bg-muted/30 text-center text-sm text-muted-foreground">
-                  PayPal Buttons will render here once connected.
-                </div>
-                <p className="text-xs text-center text-muted-foreground">
-                  Pay with your PayPal balance, card, or Venmo
-                </p>
-              </div>
-            )}
+            <h2 className="text-lg font-medium text-foreground mb-4">Pay with PayPal</h2>
+            <p className="text-sm text-muted-foreground mb-4">Pay with your PayPal balance, credit card, or debit card. No PayPal account required.</p>
+            {processing && <p className="text-sm text-accent mb-3">Processing your order…</p>}
+            <div ref={ppRef} className="min-h-[150px]" />
+            {!paypalReady && <p className="text-xs text-muted-foreground">Loading PayPal…</p>}
+            <p className="text-xs text-center text-muted-foreground mt-3">
+              <Lock size={10} className="inline mr-1" />
+              Secured by PayPal · 256-bit SSL encryption
+            </p>
           </section>
         </div>
 
-        {/* Right — order summary */}
         <div className="lg:col-span-2">
           <div className="product-card sticky top-24 space-y-4">
             <h2 className="text-lg font-medium text-foreground">Order summary</h2>
@@ -120,23 +128,16 @@ export default function CheckoutPage() {
                     <p className="text-sm text-foreground truncate">{item.title}</p>
                     <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                   </div>
-                  <span className="text-sm text-foreground">£{(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="text-sm text-foreground">${(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
             <div className="border-t border-border pt-3 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="text-foreground">£{subtotal().toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Shipping</span>
-                <span className="text-foreground">{hasPhysical ? 'Calculated' : 'Free'}</span>
-              </div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="text-foreground">${subtotal().toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span className="text-foreground">{hasPhysical ? 'Calculated after order' : 'Free'}</span></div>
             </div>
             <div className="border-t border-border pt-3 flex justify-between font-medium text-foreground">
-              <span>Total</span>
-              <span>£{subtotal().toFixed(2)}</span>
+              <span>Total</span><span>${subtotal().toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
               <Lock size={10} /> Secure checkout

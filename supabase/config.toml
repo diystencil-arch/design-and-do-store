@@ -1,1 +1,10 @@
 project_id = "emrvmqvgcquzccikxdaf"
+
+[functions.paypal-create-order]
+verify_jwt = false
+
+[functions.paypal-capture-order]
+verify_jwt = false
+
+[functions.send-contact-email]
+verify_jwt = false
