@@ -93,21 +93,6 @@ export default function Header() {
             >
               <MessageCircle size={16} /> Custom Order on WhatsApp
             </a>
-
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-border bg-card animate-fade-in">
-          <nav className="container-page py-4 flex flex-col gap-4">
-            {navLinks.map((l) => (
-              <Link
-                key={l.to}
-                to={l.to}
-                className="text-sm text-foreground py-2"
-                onClick={() => setMobileOpen(false)}
-              >
-                {l.label}
-              </Link>
-            ))}
             <Link to="/freebie" className="text-sm text-primary font-medium py-2" onClick={() => setMobileOpen(false)}>
               Free SVG ✨
             </Link>
