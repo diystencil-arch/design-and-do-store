@@ -41,7 +41,15 @@ export default function Header() {
         </nav>
 
         {/* Right icons */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
+          <a
+            href={CUSTOM_ORDER_WA}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#25D366] text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+          >
+            <MessageCircle size={14} /> Custom Order
+          </a>
           <Link to="/freebie" className="hidden md:block">
             <Heart size={20} className="text-muted-foreground hover:text-primary transition-colors" />
           </Link>
@@ -61,6 +69,30 @@ export default function Header() {
           </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-border bg-card animate-fade-in">
+          <nav className="container-page py-4 flex flex-col gap-4">
+            {navLinks.map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="text-sm text-foreground py-2"
+                onClick={() => setMobileOpen(false)}
+              >
+                {l.label}
+              </Link>
+            ))}
+            <a
+              href={CUSTOM_ORDER_WA}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#25D366] py-2"
+              onClick={() => setMobileOpen(false)}
+            >
+              <MessageCircle size={16} /> Custom Order on WhatsApp
+            </a>
 
       {/* Mobile menu */}
       {mobileOpen && (
