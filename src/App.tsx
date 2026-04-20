@@ -30,6 +30,7 @@ import AcrylicPage from "./pages/AcrylicPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
+import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminMessages from "./pages/admin/AdminMessages";
 import AdminSubscribers from "./pages/admin/AdminSubscribers";
@@ -74,6 +75,7 @@ const App = () => (
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />
+                <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
                 <Route path="/admin/blog" element={<AdminBlog />} />
                 <Route path="/admin/messages" element={<AdminMessages />} />
                 <Route path="/admin/subscribers" element={<AdminSubscribers />} />
