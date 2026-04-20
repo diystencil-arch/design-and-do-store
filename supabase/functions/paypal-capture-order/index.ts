@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
       }).catch(e => console.error('Admin email failed', e));
     }
 
-    return new Response(JSON.stringify({ orderId: order.id, total: amount }), {
+    return new Response(JSON.stringify({ orderId: order.id, total: amount, downloads: digitalLinks }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e) {

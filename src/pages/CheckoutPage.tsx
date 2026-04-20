@@ -57,9 +57,14 @@ export default function CheckoutPage() {
         });
         setProcessing(false);
         if (error || !capData?.orderId) { toast({ title: 'Payment failed', description: error?.message || 'Try again', variant: 'destructive' }); return; }
+        const dls: Array<{ title: string; url: string }> = capData.downloads || [];
         clearCart();
+        if (dls.length > 0) {
+          // Stash for the success page to show inline
+          sessionStorage.setItem('lastDownloads', JSON.stringify(dls));
+        }
         navigate(`/account?order=${capData.orderId}`);
-        toast({ title: 'Order confirmed! 🎉', description: `Confirmation sent to ${email}` });
+        toast({ title: 'Order confirmed! 🎉', description: dls.length ? 'Your downloads are ready below.' : `Confirmation sent to ${email}` });
       },
       onError: (err: any) => { console.error(err); toast({ title: 'PayPal error', description: 'Please try again', variant: 'destructive' }); },
     }).render(ppRef.current);
