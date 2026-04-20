@@ -79,7 +79,7 @@ export default function AdminOrderDetail() {
 
   const updateStatus = async (status: string) => {
     if (!order) return;
-    const { error } = await supabase.from('orders').update({ status }).eq('id', order.id);
+    const { error } = await supabase.from('orders').update({ status: status as Order['status'] as any }).eq('id', order.id);
     if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
     toast({ title: `Order marked as ${status}` });
     load();
