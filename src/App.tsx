@@ -23,6 +23,7 @@ import FreebiePage from "./pages/FreebiePage";
 import BlogPage from "./pages/BlogPage";
 import AuthPage from "./pages/AuthPage";
 import AccountPage from "./pages/AccountPage";
+import DownloadPage from "./pages/DownloadPage";
 import WoodPage from "./pages/WoodPage";
 import AcrylicPage from "./pages/AcrylicPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -67,6 +68,7 @@ const App = () => (
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/login" element={<AuthPage />} />
                 <Route path="/account" element={<AccountPage />} />
+                <Route path="/download" element={<DownloadPage />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />

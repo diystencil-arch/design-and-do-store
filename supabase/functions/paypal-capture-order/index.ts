@@ -117,7 +117,8 @@ Deno.serve(async (req) => {
         });
         const [dl] = await dlRes.json();
         if (dl?.download_token) {
-          const url = `${SUPABASE_URL.replace('.supabase.co', '.lovable.app')}/account?dl=${dl.download_token}`;
+          const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/$/, '') || '';
+          const url = `${origin}/download?token=${dl.download_token}`;
           digitalLinks.push({ title: ci.product_title, url });
         }
       }
