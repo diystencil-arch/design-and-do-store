@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { Package, LogOut, Shield } from 'lucide-react';
+import { Package, LogOut, Shield, Download } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -18,6 +18,7 @@ export default function AccountPage() {
   const navigate = useNavigate();
   const { format } = useCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [downloads, setDownloads] = useState<Array<{ token: string; title: string; expires_at: string; remaining: number }>>([]);
 
   useEffect(() => {
     if (!loading && !user) navigate('/auth', { replace: true });
@@ -31,6 +32,20 @@ export default function AccountPage() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .then(({ data }) => setOrders(data || []));
+
+    supabase
+      .from('digital_downloads')
+      .select('download_token, expires_at, download_count, download_limit, order_items(product_title)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setDownloads((data || []).map((d: any) => ({
+          token: d.download_token,
+          title: d.order_items?.product_title || 'Digital file',
+          expires_at: d.expires_at,
+          remaining: d.download_limit - d.download_count,
+        })));
+      });
   }, [user]);
 
   if (!user) return null;
@@ -82,6 +97,34 @@ export default function AccountPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {downloads.length > 0 && (
+        <>
+          <h2 className="text-lg font-medium text-foreground mt-10 mb-4 flex items-center gap-2">
+            <Download size={18} /> My digital downloads
+          </h2>
+          <div className="space-y-3">
+            {downloads.map((d) => {
+              const expired = new Date(d.expires_at) < new Date() || d.remaining <= 0;
+              return (
+                <div key={d.token} className="product-card flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{d.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {expired ? 'Expired' : `${d.remaining} download${d.remaining === 1 ? '' : 's'} left · expires ${new Date(d.expires_at).toLocaleDateString()}`}
+                    </p>
+                  </div>
+                  {!expired && (
+                    <Link to={`/download?token=${d.token}`} className="btn-primary text-xs py-2 px-3">
+                      <Download size={14} /> Download
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
