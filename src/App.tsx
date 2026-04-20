@@ -24,6 +24,7 @@ import BlogPage from "./pages/BlogPage";
 import AuthPage from "./pages/AuthPage";
 import AccountPage from "./pages/AccountPage";
 import DownloadPage from "./pages/DownloadPage";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
 import WoodPage from "./pages/WoodPage";
 import AcrylicPage from "./pages/AcrylicPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="/login" element={<AuthPage />} />
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="/download" element={<DownloadPage />} />
+                <Route path="/order-success" element={<OrderSuccessPage />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
                 <Route path="/admin/orders" element={<AdminOrders />} />

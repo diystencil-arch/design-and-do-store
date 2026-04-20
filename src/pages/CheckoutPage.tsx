@@ -63,7 +63,7 @@ export default function CheckoutPage() {
           // Stash for the success page to show inline
           sessionStorage.setItem('lastDownloads', JSON.stringify(dls));
         }
-        navigate(`/account?order=${capData.orderId}`);
+        navigate(`/order-success?order=${capData.orderId}`);
         toast({ title: 'Order confirmed! 🎉', description: dls.length ? 'Your downloads are ready below.' : `Confirmation sent to ${email}` });
       },
       onError: (err: any) => { console.error(err); toast({ title: 'PayPal error', description: 'Please try again', variant: 'destructive' }); },
