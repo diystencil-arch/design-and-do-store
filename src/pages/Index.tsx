@@ -91,7 +91,7 @@ export default function Index() {
             {searchFocused && searchResults.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden">
                 {searchResults.map((p) => (
-                  <Link key={p.id} to={`/product/${p.slug}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors">
+                  <Link key={p.id} to={`/products/${p.slug}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors">
                     <img src={p.images[0] || '/placeholder.svg'} alt={p.title} className="w-10 h-10 rounded-md object-cover bg-muted" />
                     <div className="text-left">
                       <p className="text-sm font-medium text-foreground">{p.title}</p>

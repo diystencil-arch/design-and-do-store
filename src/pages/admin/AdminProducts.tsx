@@ -380,7 +380,7 @@ export default function AdminProducts() {
 
           {/* Slug */}
           <div>
-            <label className="text-xs text-muted-foreground font-medium block mb-1">URL slug — <code>/product/{editing.slug || slugify(editing.title) || 'auto-from-title'}</code></label>
+            <label className="text-xs text-muted-foreground font-medium block mb-1">URL slug — <code>/products/{editing.slug || slugify(editing.title) || 'auto-from-title'}</code></label>
             <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="auto-from-title" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: slugify(e.target.value) })} />
           </div>
 
@@ -659,7 +659,7 @@ export default function AdminProducts() {
             <button onClick={() => setBlogPanel(p)} className="text-muted-foreground hover:text-primary p-1.5 rounded hover:bg-muted" title="Generate AI blog">
               <Languages size={16} />
             </button>
-            <a href={`/product/${p.slug}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground p-1.5"><FileText size={16} /></a>
+            <a href={`/products/${p.slug}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground p-1.5"><FileText size={16} /></a>
             <button onClick={() => startEdit(p)} className="text-muted-foreground hover:text-primary p-1.5"><Edit size={16} /></button>
             <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive p-1.5"><Trash2 size={16} /></button>
           </div>

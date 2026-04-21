@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -45,6 +45,11 @@ import { AuthProvider } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
+const ProductSlugRedirect = () => {
+  const { slug } = useParams();
+  return <Navigate to={`/products/${slug}`} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -63,7 +68,8 @@ const App = () => (
                 <Route path="/wood" element={<WoodPage />} />
                 <Route path="/acrylic" element={<AcrylicPage />} />
                 <Route path="/svg" element={<SvgPage />} />
-                <Route path="/product/:slug" element={<ProductDetailPage />} />
+                <Route path="/products/:slug" element={<ProductDetailPage />} />
+                <Route path="/product/:slug" element={<ProductSlugRedirect />} />
                 <Route path="/category/:slug" element={<CategoryPage />} />
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
