@@ -1,40 +1,88 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Edit, Upload, FileDown } from 'lucide-react';
+import { Plus, Trash2, Edit, Upload, FileDown, Sparkles, GripVertical, Star, Flame, Eye, EyeOff, Languages, FileText, X } from 'lucide-react';
+import { slugify } from '@/lib/slug';
+
+type ProductType = 'affiliate' | 'physical' | 'digital';
+type Status = 'published' | 'draft' | 'deactivated' | 'sold_out';
 
 interface Product {
   id: string;
   title: string;
   slug: string;
-  type: 'affiliate' | 'physical' | 'digital';
+  type: ProductType;
   price: number;
+  compare_at_price: number | null;
   is_active: boolean;
+  status: Status;
+  is_bestseller: boolean;
+  is_featured: boolean;
+  is_recommended: boolean;
   tags: string[];
   images: string[];
   description: string | null;
+  sku: string | null;
+  barcode: string | null;
+  stock_quantity: number;
+  low_stock_threshold: number;
+  personalization_enabled: boolean;
+  personalization_label: string | null;
+  personalization_max_chars: number | null;
+  video_url: string | null;
+  video_thumbnail: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
 }
 
+interface Category { id: string; name: string; slug: string; }
+
 const empty = {
-  title: '', slug: '', type: 'physical' as Product['type'], price: 0,
-  description: '', tags: '', image_url: '', is_active: true, amazon_url: '',
-  digital_storage_path: '' as string, digital_formats: '' as string,
+  title: '', slug: '', type: 'physical' as ProductType, price: 0, compare_at_price: '' as number | string,
+  description: '', tags: '', images: [] as string[],
+  status: 'published' as Status, is_active: true,
+  is_bestseller: false, is_featured: false, is_recommended: false,
+  amazon_url: '',
+  digital_storage_path: '', digital_formats: '',
+  sku: '', barcode: '', stock_quantity: 0, low_stock_threshold: 5,
+  personalization_enabled: false, personalization_label: 'Add your personalization', personalization_max_chars: 100,
+  video_url: '', video_thumbnail: '',
+  meta_title: '', meta_description: '',
+  category_ids: [] as string[],
 };
+
+const LANGUAGES = [
+  { code: 'en', label: '🇬🇧 English' }, { code: 'nl', label: '🇳🇱 Dutch' }, { code: 'fr', label: '🇫🇷 French' },
+  { code: 'de', label: '🇩🇪 German' }, { code: 'it', label: '🇮🇹 Italian' }, { code: 'ja', label: '🇯🇵 Japanese' },
+  { code: 'pl', label: '🇵🇱 Polish' }, { code: 'pt', label: '🇵🇹 Portuguese' }, { code: 'ru', label: '🇷🇺 Russian' },
+  { code: 'es', label: '🇪🇸 Spanish' },
+];
 
 export default function AdminProducts() {
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [editing, setEditing] = useState<typeof empty & { id?: string } | null>(null);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [blogLoading, setBlogLoading] = useState<string | null>(null);
+  const [blogPanel, setBlogPanel] = useState<Product | null>(null);
+  const [filter, setFilter] = useState<'all' | Status>('all');
+  const dragSrc = useRef<number | null>(null);
 
-  const load = () => {
-    supabase.from('products').select('*').order('created_at', { ascending: false })
-      .then(({ data }) => setProducts((data || []) as Product[]));
+  const load = async () => {
+    const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    setProducts((data || []) as Product[]);
+  };
+  const loadCategories = async () => {
+    const { data } = await supabase.from('categories').select('id, name, slug').order('sort_order');
+    setCategories(data || []);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); loadCategories(); }, []);
 
   const startEdit = async (p: Product) => {
     let digital_storage_path = '';
@@ -44,25 +92,75 @@ export default function AdminProducts() {
       digital_storage_path = df?.storage_path || '';
       digital_formats = (df?.file_formats || []).join(', ');
     }
+    const { data: pcs } = await supabase.from('product_categories').select('category_id').eq('product_id', p.id);
     setEditing({
-      id: p.id, title: p.title, slug: p.slug, type: p.type, price: Number(p.price),
+      id: p.id, title: p.title, slug: p.slug, type: p.type,
+      price: Number(p.price), compare_at_price: p.compare_at_price ?? '',
       description: p.description || '', tags: (p.tags || []).join(', '),
-      image_url: p.images[0] || '', is_active: p.is_active, amazon_url: '',
-      digital_storage_path, digital_formats,
+      images: p.images || [],
+      status: p.status || 'published', is_active: p.is_active,
+      is_bestseller: !!p.is_bestseller, is_featured: !!p.is_featured, is_recommended: !!p.is_recommended,
+      amazon_url: '', digital_storage_path, digital_formats,
+      sku: p.sku || '', barcode: p.barcode || '',
+      stock_quantity: p.stock_quantity ?? 0, low_stock_threshold: p.low_stock_threshold ?? 5,
+      personalization_enabled: !!p.personalization_enabled,
+      personalization_label: p.personalization_label || 'Add your personalization',
+      personalization_max_chars: p.personalization_max_chars ?? 100,
+      video_url: p.video_url || '', video_thumbnail: p.video_thumbnail || '',
+      meta_title: p.meta_title || '', meta_description: p.meta_description || '',
+      category_ids: (pcs || []).map((r) => r.category_id),
     });
+    if (p.type === 'affiliate') {
+      const { data: af } = await supabase.from('affiliate_products').select('amazon_url').eq('product_id', p.id).maybeSingle();
+      setEditing((prev) => prev ? { ...prev, amazon_url: af?.amazon_url || '' } : prev);
+    }
   };
 
-  const uploadImage = async (file: File) => {
+  const uploadImages = async (files: FileList) => {
     if (!editing) return;
     setUploadingImg(true);
+    const newUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split('.').pop();
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: false, contentType: file.type });
+      if (error) { toast({ title: 'Upload failed', description: error.message, variant: 'destructive' }); continue; }
+      const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+      newUrls.push(data.publicUrl);
+    }
+    setEditing({ ...editing, images: [...editing.images, ...newUrls] });
+    setUploadingImg(false);
+    if (newUrls.length) toast({ title: `${newUrls.length} image(s) uploaded` });
+  };
+
+  const uploadVideo = async (file: File) => {
+    if (!editing) return;
+    if (file.size > 50 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Max 50MB for videos', variant: 'destructive' });
+      return;
+    }
+    setUploadingVideo(true);
     const ext = file.name.split('.').pop();
     const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: false, contentType: file.type });
-    if (error) { toast({ title: 'Upload failed', description: error.message, variant: 'destructive' }); setUploadingImg(false); return; }
-    const { data } = supabase.storage.from('product-images').getPublicUrl(path);
-    setEditing({ ...editing, image_url: data.publicUrl });
-    setUploadingImg(false);
-    toast({ title: 'Image uploaded' });
+    const { error } = await supabase.storage.from('product-videos').upload(path, file, { upsert: false, contentType: file.type });
+    if (error) { toast({ title: 'Upload failed', description: error.message, variant: 'destructive' }); setUploadingVideo(false); return; }
+    const { data } = supabase.storage.from('product-videos').getPublicUrl(path);
+    setEditing({ ...editing, video_url: data.publicUrl, video_thumbnail: editing.images[0] || '' });
+    setUploadingVideo(false);
+    toast({ title: 'Video uploaded' });
+  };
+
+  const removeImage = (idx: number) => {
+    if (!editing) return;
+    setEditing({ ...editing, images: editing.images.filter((_, i) => i !== idx) });
+  };
+
+  const reorderImages = (from: number, to: number) => {
+    if (!editing || from === to) return;
+    const arr = [...editing.images];
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    setEditing({ ...editing, images: arr });
   };
 
   const uploadDigitalFile = async (file: File) => {
@@ -71,7 +169,7 @@ export default function AdminProducts() {
     const ext = (file.name.split('.').pop() || '').toLowerCase();
     if (!allowed.includes(ext)) { toast({ title: 'Invalid file', description: 'Use SVG, ZIP, PDF, PNG, or DXF', variant: 'destructive' }); return; }
     setUploadingFile(true);
-    const slug = (editing.slug || editing.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')) || 'file';
+    const slug = slugify(editing.slug || editing.title) || 'file';
     const path = `${slug}-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from('digital-files').upload(path, file, { upsert: false, contentType: file.type });
     if (error) { toast({ title: 'Upload failed', description: error.message, variant: 'destructive' }); setUploadingFile(false); return; }
@@ -80,18 +178,116 @@ export default function AdminProducts() {
     toast({ title: 'File uploaded', description: file.name });
   };
 
+  const callAI = async (mode: 'title' | 'description' | 'tags') => {
+    if (!editing) return;
+    setAiLoading(mode);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-content', {
+        body: {
+          mode,
+          title: editing.title,
+          description: editing.description,
+          productType: editing.type,
+          imageUrl: editing.images[0],
+        },
+      });
+      if (error) throw error;
+      if (mode === 'title') setEditing({ ...editing, title: data.result });
+      else if (mode === 'description') setEditing({ ...editing, description: data.result });
+      else if (mode === 'tags') {
+        const newTags = Array.from(new Set([
+          ...editing.tags.split(',').map((t) => t.trim()).filter(Boolean),
+          ...data.result,
+        ]));
+        setEditing({ ...editing, tags: newTags.join(', ') });
+      }
+      toast({ title: `AI generated ${mode}` });
+    } catch (e: any) {
+      toast({ title: 'AI error', description: e.message || 'Could not reach Lovable AI', variant: 'destructive' });
+    } finally {
+      setAiLoading(null);
+    }
+  };
+
+  const generateBlog = async (product: Product, language: string) => {
+    setBlogLoading(language);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-content', {
+        body: {
+          mode: 'blog',
+          title: product.title,
+          description: product.description,
+          productType: product.type,
+          tags: product.tags,
+          imageUrl: product.images?.[0],
+          language,
+        },
+      });
+      if (error) throw error;
+      const blog = data.result;
+      // Ensure unique slug per language
+      let baseSlug = slugify(blog.slug || blog.title);
+      let finalSlug = baseSlug;
+      let n = 1;
+      while (true) {
+        const { data: existing } = await supabase.from('blog_posts').select('id').eq('slug', finalSlug).eq('language', language).maybeSingle();
+        if (!existing) break;
+        n += 1;
+        finalSlug = `${baseSlug}-${n}`;
+      }
+      const { error: insertErr } = await supabase.from('blog_posts').insert({
+        title: blog.title,
+        slug: finalSlug,
+        excerpt: blog.excerpt,
+        content: blog.content,
+        meta_title: blog.meta_title,
+        meta_description: blog.meta_description,
+        tags: blog.tags,
+        language,
+        product_id: product.id,
+        cover_image: product.images?.[0] || null,
+        is_published: true,
+        published_at: new Date().toISOString(),
+      });
+      if (insertErr) throw insertErr;
+      toast({ title: `Blog post generated`, description: `Published in ${LANGUAGES.find(l => l.code === language)?.label}` });
+    } catch (e: any) {
+      toast({ title: 'Blog generation failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setBlogLoading(null);
+    }
+  };
+
   const save = async () => {
     if (!editing) return;
-    const slug = editing.slug || editing.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const payload = {
-      title: editing.title,
+    if (!editing.title.trim()) { toast({ title: 'Title required', variant: 'destructive' }); return; }
+    const slug = slugify(editing.slug || editing.title);
+    if (!slug) { toast({ title: 'Could not generate slug', variant: 'destructive' }); return; }
+    const payload: any = {
+      title: editing.title.trim(),
       slug,
       type: editing.type,
-      price: editing.price,
+      price: Number(editing.price) || 0,
+      compare_at_price: editing.compare_at_price === '' ? null : Number(editing.compare_at_price),
       description: editing.description,
       tags: editing.tags.split(',').map((t) => t.trim()).filter(Boolean),
-      images: editing.image_url ? [editing.image_url] : [],
-      is_active: editing.is_active,
+      images: editing.images,
+      status: editing.status,
+      is_active: editing.status !== 'deactivated' && editing.status !== 'draft',
+      is_bestseller: editing.is_bestseller,
+      is_featured: editing.is_featured,
+      is_recommended: editing.is_recommended,
+      sku: editing.sku || null,
+      barcode: editing.barcode || null,
+      stock_quantity: Number(editing.stock_quantity) || 0,
+      low_stock_threshold: Number(editing.low_stock_threshold) || 5,
+      personalization_enabled: editing.personalization_enabled,
+      personalization_label: editing.personalization_label || null,
+      personalization_max_chars: Number(editing.personalization_max_chars) || 100,
+      video_url: editing.video_url || null,
+      video_thumbnail: editing.video_thumbnail || null,
+      meta_title: editing.meta_title || null,
+      meta_description: editing.meta_description || null,
     };
     let productId = editing.id;
     if (editing.id) {
@@ -102,6 +298,15 @@ export default function AdminProducts() {
       if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
       productId = data.id;
     }
+
+    // Categories
+    if (productId) {
+      await supabase.from('product_categories').delete().eq('product_id', productId);
+      if (editing.category_ids.length) {
+        await supabase.from('product_categories').insert(editing.category_ids.map((cid) => ({ product_id: productId, category_id: cid })));
+      }
+    }
+
     if (editing.type === 'affiliate' && editing.amazon_url && productId) {
       await supabase.from('affiliate_products').upsert({ product_id: productId, amazon_url: editing.amazon_url }, { onConflict: 'product_id' });
     }
@@ -126,6 +331,13 @@ export default function AdminProducts() {
     load();
   };
 
+  const quickToggle = async (p: Product, field: 'is_bestseller' | 'is_featured' | 'is_recommended') => {
+    await supabase.from('products').update({ [field]: !p[field] }).eq('id', p.id);
+    load();
+  };
+
+  const filtered = filter === 'all' ? products : products.filter((p) => p.status === filter);
+
   return (
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
@@ -135,35 +347,208 @@ export default function AdminProducts() {
         </button>
       </div>
 
-      {editing && (
-        <div className="product-card mb-6 space-y-3">
-          <h2 className="font-medium">{editing.id ? 'Edit product' : 'New product'}</h2>
-          <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="Title" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
-          <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="Slug (auto if blank)" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: e.target.value })} />
-          <select className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.type} onChange={(e) => setEditing({ ...editing, type: e.target.value as Product['type'] })}>
-            <option value="physical">Physical (stencil/wood/acrylic)</option>
-            <option value="digital">Digital (SVG)</option>
-            <option value="affiliate">Affiliate (Amazon)</option>
-          </select>
-          <input type="number" step="0.01" className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="Price (CAD)" value={editing.price} onChange={(e) => setEditing({ ...editing, price: parseFloat(e.target.value) || 0 })} />
-          <textarea className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="Description" rows={3} value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
-          <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="Tags (comma-separated, use 'wood', 'acrylic', 'stencil')" value={editing.tags} onChange={(e) => setEditing({ ...editing, tags: e.target.value })} />
+      <div className="flex gap-1 mb-4 overflow-x-auto">
+        {(['all', 'published', 'draft', 'sold_out', 'deactivated'] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => setFilter(s)}
+            className={`px-3 py-1.5 text-xs rounded-md whitespace-nowrap ${filter === s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-secondary'}`}
+          >
+            {s.replace('_', ' ')} ({s === 'all' ? products.length : products.filter((p) => p.status === s).length})
+          </button>
+        ))}
+      </div>
 
-          {/* Image upload */}
+      {editing && (
+        <div className="product-card mb-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-medium">{editing.id ? 'Edit product' : 'New product'}</h2>
+            <button onClick={() => setEditing(null)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+          </div>
+
+          {/* Title with AI */}
+          <div>
+            <label className="text-xs text-muted-foreground font-medium flex items-center justify-between mb-1">
+              <span>Title *</span>
+              <button onClick={() => callAI('title')} disabled={aiLoading === 'title'} className="text-primary hover:underline flex items-center gap-1">
+                <Sparkles size={12} /> {aiLoading === 'title' ? 'Generating…' : 'AI generate'}
+              </button>
+            </label>
+            <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
+          </div>
+
+          {/* Slug */}
+          <div>
+            <label className="text-xs text-muted-foreground font-medium block mb-1">URL slug — <code>/product/{editing.slug || slugify(editing.title) || 'auto-from-title'}</code></label>
+            <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="auto-from-title" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: slugify(e.target.value) })} />
+          </div>
+
+          {/* Type */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground font-medium block mb-1">Type</label>
+              <select className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.type} onChange={(e) => setEditing({ ...editing, type: e.target.value as ProductType })}>
+                <option value="physical">Physical (stencil/wood/acrylic)</option>
+                <option value="digital">Digital (SVG)</option>
+                <option value="affiliate">Affiliate (Amazon)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium block mb-1">Status</label>
+              <select className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.status} onChange={(e) => setEditing({ ...editing, status: e.target.value as Status })}>
+                <option value="published">Published (live)</option>
+                <option value="draft">Draft (hidden)</option>
+                <option value="sold_out">Sold out (visible, no buy)</option>
+                <option value="deactivated">Deactivated (hidden)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Pricing */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground font-medium block mb-1">Price (CAD) *</label>
+              <input type="number" step="0.01" className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.price} onChange={(e) => setEditing({ ...editing, price: parseFloat(e.target.value) || 0 })} />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium block mb-1">Compare-at price (sale strikethrough)</label>
+              <input type="number" step="0.01" className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.compare_at_price as any} onChange={(e) => setEditing({ ...editing, compare_at_price: e.target.value })} />
+            </div>
+          </div>
+
+          {/* Inventory */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground font-medium block mb-1">SKU</label>
+              <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.sku} onChange={(e) => setEditing({ ...editing, sku: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium block mb-1">Barcode</label>
+              <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.barcode} onChange={(e) => setEditing({ ...editing, barcode: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium block mb-1">Stock</label>
+              <input type="number" className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.stock_quantity} onChange={(e) => setEditing({ ...editing, stock_quantity: parseInt(e.target.value) || 0 })} />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium block mb-1">Low stock alert</label>
+              <input type="number" className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.low_stock_threshold} onChange={(e) => setEditing({ ...editing, low_stock_threshold: parseInt(e.target.value) || 5 })} />
+            </div>
+          </div>
+
+          {/* Description with AI */}
+          <div>
+            <label className="text-xs text-muted-foreground font-medium flex items-center justify-between mb-1">
+              <span>Description</span>
+              <button onClick={() => callAI('description')} disabled={aiLoading === 'description'} className="text-primary hover:underline flex items-center gap-1">
+                <Sparkles size={12} /> {aiLoading === 'description' ? 'Generating…' : 'AI generate'}
+              </button>
+            </label>
+            <textarea className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" rows={4} value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
+          </div>
+
+          {/* Tags with AI */}
+          <div>
+            <label className="text-xs text-muted-foreground font-medium flex items-center justify-between mb-1">
+              <span>Tags (comma-separated)</span>
+              <button onClick={() => callAI('tags')} disabled={aiLoading === 'tags'} className="text-primary hover:underline flex items-center gap-1">
+                <Sparkles size={12} /> {aiLoading === 'tags' ? 'Suggesting…' : 'AI suggest'}
+              </button>
+            </label>
+            <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="wood, rustic, wedding" value={editing.tags} onChange={(e) => setEditing({ ...editing, tags: e.target.value })} />
+          </div>
+
+          {/* Categories */}
+          {categories.length > 0 && (
+            <div>
+              <label className="text-xs text-muted-foreground font-medium block mb-2">Categories</label>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((c) => {
+                  const active = editing.category_ids.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setEditing({
+                        ...editing,
+                        category_ids: active ? editing.category_ids.filter((id) => id !== c.id) : [...editing.category_ids, c.id]
+                      })}
+                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/40'}`}
+                    >
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Badges */}
+          <div className="flex flex-wrap gap-4 p-3 bg-muted/50 rounded-md">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={editing.is_bestseller} onChange={(e) => setEditing({ ...editing, is_bestseller: e.target.checked })} />
+              <Flame size={14} /> Bestseller
+            </label>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={editing.is_featured} onChange={(e) => setEditing({ ...editing, is_featured: e.target.checked })} />
+              <Star size={14} /> Featured (Home)
+            </label>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={editing.is_recommended} onChange={(e) => setEditing({ ...editing, is_recommended: e.target.checked })} />
+              <Sparkles size={14} /> Recommended
+            </label>
+          </div>
+
+          {/* Images drag-drop */}
           <div className="space-y-2">
-            <label className="text-xs text-muted-foreground font-medium">Product image</label>
-            <div className="flex items-center gap-3">
-              {editing.image_url && <img src={editing.image_url} alt="" className="w-16 h-16 rounded object-cover bg-muted" />}
-              <label className="btn-outline text-xs py-2 px-3 cursor-pointer">
-                <Upload size={14} /> {uploadingImg ? 'Uploading…' : (editing.image_url ? 'Replace image' : 'Upload image')}
-                <input type="file" accept="image/*" className="hidden" disabled={uploadingImg} onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])} />
+            <label className="text-xs text-muted-foreground font-medium">Product images (drag to reorder, first = main)</label>
+            <div className="flex flex-wrap gap-2">
+              {editing.images.map((src, i) => (
+                <div
+                  key={src + i}
+                  draggable
+                  onDragStart={() => { dragSrc.current = i; }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => { if (dragSrc.current !== null) reorderImages(dragSrc.current, i); dragSrc.current = null; }}
+                  className="relative w-24 h-24 rounded-md overflow-hidden border border-border bg-muted group cursor-move"
+                >
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute top-1 left-1 text-background bg-foreground/60 rounded p-0.5"><GripVertical size={10} /></div>
+                  {i === 0 && <span className="absolute bottom-1 left-1 text-[9px] bg-primary text-primary-foreground px-1 rounded">Main</span>}
+                  <button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100">
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+              <label className="w-24 h-24 border-2 border-dashed border-border rounded-md flex flex-col items-center justify-center text-xs text-muted-foreground hover:border-primary cursor-pointer">
+                <Upload size={18} />
+                <span className="mt-1">{uploadingImg ? 'Uploading…' : 'Add'}</span>
+                <input type="file" accept="image/*" multiple className="hidden" disabled={uploadingImg} onChange={(e) => e.target.files && uploadImages(e.target.files)} />
               </label>
             </div>
-            <input className="w-full px-3 py-2 border border-border rounded-md text-xs bg-background text-muted-foreground" placeholder="Or paste image URL" value={editing.image_url} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} />
+          </div>
+
+          {/* Video */}
+          <div className="space-y-2 p-3 bg-muted/30 rounded-md">
+            <label className="text-xs text-muted-foreground font-medium">Product video (optional, MP4/MOV, max 50MB)</label>
+            <div className="flex items-center gap-3">
+              {editing.video_url && (
+                <video src={editing.video_url} className="w-24 h-16 object-cover rounded bg-muted" muted />
+              )}
+              <label className="btn-outline text-xs py-2 px-3 cursor-pointer">
+                <Upload size={14} /> {uploadingVideo ? 'Uploading…' : (editing.video_url ? 'Replace video' : 'Upload video')}
+                <input type="file" accept="video/mp4,video/quicktime,video/*" className="hidden" disabled={uploadingVideo} onChange={(e) => e.target.files?.[0] && uploadVideo(e.target.files[0])} />
+              </label>
+              {editing.video_url && (
+                <button onClick={() => setEditing({ ...editing, video_url: '', video_thumbnail: '' })} className="text-xs text-destructive">Remove</button>
+              )}
+            </div>
           </div>
 
           {editing.type === 'affiliate' && (
-            <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="Amazon URL" value={editing.amazon_url} onChange={(e) => setEditing({ ...editing, amazon_url: e.target.value })} />
+            <div>
+              <label className="text-xs text-muted-foreground font-medium block mb-1">Amazon URL</label>
+              <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.amazon_url} onChange={(e) => setEditing({ ...editing, amazon_url: e.target.value })} />
+            </div>
           )}
 
           {editing.type === 'digital' && (
@@ -177,37 +562,108 @@ export default function AdminProducts() {
                 )}
                 <label className="btn-outline text-xs py-2 px-3 cursor-pointer">
                   <Upload size={14} /> {uploadingFile ? 'Uploading…' : (editing.digital_storage_path ? 'Replace file' : 'Upload SVG/ZIP')}
-                  <input type="file" accept=".svg,.zip,.pdf,.png,.dxf,image/svg+xml,application/zip,application/pdf" className="hidden" disabled={uploadingFile} onChange={(e) => e.target.files?.[0] && uploadDigitalFile(e.target.files[0])} />
+                  <input type="file" accept=".svg,.zip,.pdf,.png,.dxf" className="hidden" disabled={uploadingFile} onChange={(e) => e.target.files?.[0] && uploadDigitalFile(e.target.files[0])} />
                 </label>
               </div>
               <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="Formats included (e.g. SVG, PNG, DXF, PDF)" value={editing.digital_formats} onChange={(e) => setEditing({ ...editing, digital_formats: e.target.value })} />
             </div>
           )}
 
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} />
-            Active (visible on storefront)
-          </label>
-          <div className="flex gap-2">
-            <button onClick={save} className="btn-primary text-sm py-2 px-4">Save</button>
+          {/* Personalization */}
+          <div className="p-3 bg-muted/30 rounded-md space-y-2">
+            <label className="flex items-center gap-2 text-sm cursor-pointer font-medium">
+              <input type="checkbox" checked={editing.personalization_enabled} onChange={(e) => setEditing({ ...editing, personalization_enabled: e.target.checked })} />
+              Enable customer personalization (text input on product page)
+            </label>
+            {editing.personalization_enabled && (
+              <div className="grid grid-cols-2 gap-3 pl-6">
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">Field label</label>
+                  <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.personalization_label || ''} onChange={(e) => setEditing({ ...editing, personalization_label: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">Max characters</label>
+                  <input type="number" className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.personalization_max_chars || 100} onChange={(e) => setEditing({ ...editing, personalization_max_chars: parseInt(e.target.value) || 100 })} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* SEO */}
+          <details className="p-3 bg-muted/30 rounded-md">
+            <summary className="text-sm font-medium cursor-pointer">SEO meta tags</summary>
+            <div className="mt-3 space-y-2">
+              <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="Meta title (max 60 chars)" maxLength={60} value={editing.meta_title} onChange={(e) => setEditing({ ...editing, meta_title: e.target.value })} />
+              <textarea className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" rows={2} placeholder="Meta description (max 160 chars)" maxLength={160} value={editing.meta_description} onChange={(e) => setEditing({ ...editing, meta_description: e.target.value })} />
+            </div>
+          </details>
+
+          <div className="flex gap-2 pt-2 border-t border-border">
+            <button onClick={save} className="btn-primary text-sm py-2 px-4">Save product</button>
             <button onClick={() => setEditing(null)} className="btn-outline text-sm py-2 px-4">Cancel</button>
           </div>
         </div>
       )}
 
-      <div className="space-y-2">
-        {products.map((p) => (
-          <div key={p.id} className="product-card flex items-center gap-4">
-            <img src={p.images[0] || '/placeholder.svg'} alt="" className="w-14 h-14 rounded object-cover bg-muted" />
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-foreground truncate">{p.title}</p>
-              <p className="text-xs text-muted-foreground">{p.type} · ${Number(p.price).toFixed(2)} · {p.is_active ? 'Active' : 'Hidden'}</p>
+      {/* Blog generation panel */}
+      {blogPanel && (
+        <div className="fixed inset-0 bg-foreground/40 z-50 flex items-center justify-center p-4" onClick={() => setBlogPanel(null)}>
+          <div className="bg-card rounded-xl p-6 max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium">Generate AI blog for "{blogPanel.title}"</h3>
+              <button onClick={() => setBlogPanel(null)}><X size={18} /></button>
             </div>
-            <button onClick={() => startEdit(p)} className="text-muted-foreground hover:text-primary"><Edit size={16} /></button>
-            <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive"><Trash2 size={16} /></button>
+            <p className="text-xs text-muted-foreground mb-4">Pick a language. The post is auto-published with SEO meta and linked to this product.</p>
+            <div className="grid grid-cols-2 gap-2">
+              {LANGUAGES.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => generateBlog(blogPanel, lang.code)}
+                  disabled={!!blogLoading}
+                  className="flex items-center justify-between px-3 py-2 border border-border rounded-md hover:border-primary/40 text-sm disabled:opacity-50"
+                >
+                  <span>{lang.label}</span>
+                  {blogLoading === lang.code && <span className="text-xs text-primary">…</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {filtered.map((p) => (
+          <div key={p.id} className="product-card flex items-center gap-4">
+            <img src={p.images?.[0] || '/placeholder.svg'} alt="" className="w-14 h-14 rounded object-cover bg-muted" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-medium text-foreground truncate">{p.title}</p>
+                {p.is_bestseller && <span className="text-[10px] px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full">Bestseller</span>}
+                {p.is_featured && <span className="text-[10px] px-1.5 py-0.5 bg-foreground text-background rounded-full">Featured</span>}
+                {p.is_recommended && <span className="text-[10px] px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded-full">Recommended</span>}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {p.type} · ${Number(p.price).toFixed(2)} · {p.status?.replace('_', ' ')} · stock {p.stock_quantity ?? 0}
+                {(p.stock_quantity ?? 0) > 0 && (p.stock_quantity ?? 0) <= (p.low_stock_threshold ?? 5) && (
+                  <span className="ml-2 text-destructive">⚠ Low stock</span>
+                )}
+              </p>
+            </div>
+            <button onClick={() => quickToggle(p, 'is_featured')} className={`p-1.5 rounded ${p.is_featured ? 'text-foreground bg-secondary' : 'text-muted-foreground hover:bg-muted'}`} title="Toggle featured">
+              <Star size={14} />
+            </button>
+            <button onClick={() => quickToggle(p, 'is_bestseller')} className={`p-1.5 rounded ${p.is_bestseller ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-muted'}`} title="Toggle bestseller">
+              <Flame size={14} />
+            </button>
+            <button onClick={() => setBlogPanel(p)} className="text-muted-foreground hover:text-primary p-1.5 rounded hover:bg-muted" title="Generate AI blog">
+              <Languages size={16} />
+            </button>
+            <a href={`/product/${p.slug}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground p-1.5"><FileText size={16} /></a>
+            <button onClick={() => startEdit(p)} className="text-muted-foreground hover:text-primary p-1.5"><Edit size={16} /></button>
+            <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive p-1.5"><Trash2 size={16} /></button>
           </div>
         ))}
-        {products.length === 0 && <p className="text-muted-foreground text-sm">No products yet. Click "New product" to add one.</p>}
+        {filtered.length === 0 && <p className="text-muted-foreground text-sm">No products in this view.</p>}
       </div>
     </AdminLayout>
   );

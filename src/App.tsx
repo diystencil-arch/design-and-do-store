@@ -27,6 +27,7 @@ import DownloadPage from "./pages/DownloadPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import WoodPage from "./pages/WoodPage";
 import AcrylicPage from "./pages/AcrylicPage";
+import CategoryPage from "./pages/CategoryPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -63,6 +64,7 @@ const App = () => (
                 <Route path="/acrylic" element={<AcrylicPage />} />
                 <Route path="/svg" element={<SvgPage />} />
                 <Route path="/product/:slug" element={<ProductDetailPage />} />
+                <Route path="/category/:slug" element={<CategoryPage />} />
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/freebie" element={<FreebiePage />} />
