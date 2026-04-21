@@ -332,7 +332,8 @@ export default function AdminProducts() {
   };
 
   const quickToggle = async (p: Product, field: 'is_bestseller' | 'is_featured' | 'is_recommended') => {
-    await supabase.from('products').update({ [field]: !p[field] }).eq('id', p.id);
+    const update: any = { [field]: !p[field] };
+    await supabase.from('products').update(update).eq('id', p.id);
     load();
   };
 
