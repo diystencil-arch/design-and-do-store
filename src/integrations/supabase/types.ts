@@ -99,6 +99,10 @@ export type Database = {
           excerpt: string | null
           id: string
           is_published: boolean
+          language: string
+          meta_description: string | null
+          meta_title: string | null
+          product_id: string | null
           published_at: string | null
           slug: string
           tags: string[] | null
@@ -113,6 +117,10 @@ export type Database = {
           excerpt?: string | null
           id?: string
           is_published?: boolean
+          language?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          product_id?: string | null
           published_at?: string | null
           slug: string
           tags?: string[] | null
@@ -127,10 +135,58 @@ export type Database = {
           excerpt?: string | null
           id?: string
           is_published?: boolean
+          language?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          product_id?: string | null
           published_at?: string | null
           slug?: string
           tags?: string[] | null
           title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          show_on_home: boolean
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          show_on_home?: boolean
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          show_on_home?: boolean
+          slug?: string
+          sort_order?: number
           updated_at?: string
         }
         Relationships: []
@@ -282,6 +338,7 @@ export type Database = {
           created_at: string
           id: string
           order_id: string
+          personalization: string | null
           product_id: string | null
           product_title: string
           product_type: Database["public"]["Enums"]["product_type"]
@@ -293,6 +350,7 @@ export type Database = {
           created_at?: string
           id?: string
           order_id: string
+          personalization?: string | null
           product_id?: string | null
           product_title: string
           product_type: Database["public"]["Enums"]["product_type"]
@@ -304,6 +362,7 @@ export type Database = {
           created_at?: string
           id?: string
           order_id?: string
+          personalization?: string | null
           product_id?: string | null
           product_title?: string
           product_type?: Database["public"]["Enums"]["product_type"]
@@ -442,48 +501,126 @@ export type Database = {
           },
         ]
       }
+      product_categories: {
+        Row: {
+          category_id: string
+          product_id: string
+        }
+        Insert: {
+          category_id: string
+          product_id: string
+        }
+        Update: {
+          category_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_categories_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
+          barcode: string | null
           compare_at_price: number | null
           created_at: string
           description: string | null
+          featured_sort: number | null
           id: string
           images: string[] | null
           is_active: boolean
+          is_bestseller: boolean
+          is_featured: boolean
+          is_recommended: boolean
+          low_stock_threshold: number
+          meta_description: string | null
+          meta_title: string | null
+          personalization_enabled: boolean
+          personalization_label: string | null
+          personalization_max_chars: number | null
           price: number
+          sku: string | null
           slug: string
+          status: Database["public"]["Enums"]["product_status"]
+          stock_quantity: number
           tags: string[] | null
           title: string
           type: Database["public"]["Enums"]["product_type"]
           updated_at: string
+          video_thumbnail: string | null
+          video_url: string | null
         }
         Insert: {
+          barcode?: string | null
           compare_at_price?: number | null
           created_at?: string
           description?: string | null
+          featured_sort?: number | null
           id?: string
           images?: string[] | null
           is_active?: boolean
+          is_bestseller?: boolean
+          is_featured?: boolean
+          is_recommended?: boolean
+          low_stock_threshold?: number
+          meta_description?: string | null
+          meta_title?: string | null
+          personalization_enabled?: boolean
+          personalization_label?: string | null
+          personalization_max_chars?: number | null
           price?: number
+          sku?: string | null
           slug: string
+          status?: Database["public"]["Enums"]["product_status"]
+          stock_quantity?: number
           tags?: string[] | null
           title: string
           type: Database["public"]["Enums"]["product_type"]
           updated_at?: string
+          video_thumbnail?: string | null
+          video_url?: string | null
         }
         Update: {
+          barcode?: string | null
           compare_at_price?: number | null
           created_at?: string
           description?: string | null
+          featured_sort?: number | null
           id?: string
           images?: string[] | null
           is_active?: boolean
+          is_bestseller?: boolean
+          is_featured?: boolean
+          is_recommended?: boolean
+          low_stock_threshold?: number
+          meta_description?: string | null
+          meta_title?: string | null
+          personalization_enabled?: boolean
+          personalization_label?: string | null
+          personalization_max_chars?: number | null
           price?: number
+          sku?: string | null
           slug?: string
+          status?: Database["public"]["Enums"]["product_status"]
+          stock_quantity?: number
           tags?: string[] | null
           title?: string
           type?: Database["public"]["Enums"]["product_type"]
           updated_at?: string
+          video_thumbnail?: string | null
+          video_url?: string | null
         }
         Relationships: []
       }
@@ -556,6 +693,7 @@ export type Database = {
         | "refunded"
         | "payment_failed"
       payment_provider: "stripe" | "paypal"
+      product_status: "published" | "draft" | "deactivated" | "sold_out"
       product_type: "affiliate" | "physical" | "digital"
     }
     CompositeTypes: {
@@ -695,6 +833,7 @@ export const Constants = {
         "payment_failed",
       ],
       payment_provider: ["stripe", "paypal"],
+      product_status: ["published", "draft", "deactivated", "sold_out"],
       product_type: ["affiliate", "physical", "digital"],
     },
   },
