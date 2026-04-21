@@ -45,6 +45,11 @@ import { AuthProvider } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
+const ProductSlugRedirect = () => {
+  const { slug } = useParams();
+  return <Navigate to={`/products/${slug}`} replace />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -63,7 +68,8 @@ const App = () => (
                 <Route path="/wood" element={<WoodPage />} />
                 <Route path="/acrylic" element={<AcrylicPage />} />
                 <Route path="/svg" element={<SvgPage />} />
-                <Route path="/product/:slug" element={<ProductDetailPage />} />
+                <Route path="/products/:slug" element={<ProductDetailPage />} />
+                <Route path="/product/:slug" element={<ProductSlugRedirect />} />
                 <Route path="/category/:slug" element={<CategoryPage />} />
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />

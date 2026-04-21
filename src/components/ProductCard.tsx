@@ -111,7 +111,7 @@ export default function ProductCard({ product }: Props) {
   }
 
   return (
-    <Link to={`/product/${product.slug}`} className="product-card group block">
+    <Link to={`/products/${product.slug}`} className="product-card group block">
       <div className="aspect-square rounded-lg overflow-hidden bg-muted mb-4 relative">
         <Badges />
         <img
