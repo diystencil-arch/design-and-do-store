@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Sparkles, Search } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
-import { useProductsByType, DbProduct } from '@/hooks/useProducts';
+import { useProductsByType, useFeaturedProducts, useCategories, DbProduct } from '@/hooks/useProducts';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +12,9 @@ export default function Index() {
   const { products: affiliates } = useProductsByType('affiliate');
   const { products: physicals } = useProductsByType('physical');
   const { products: digitals } = useProductsByType('digital');
+  const { products: featured } = useFeaturedProducts(8);
+  const { categories } = useCategories();
+  const homeCategories = categories.filter((c) => c.show_on_home);
   const [freebieEmail, setFreebieEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,6 +109,34 @@ export default function Index() {
           </div>
         </motion.div>
       </section>
+
+      {featured.length > 0 && (
+        <section className="container-page mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="section-heading flex items-center gap-2"><Sparkles size={20} className="text-primary" /> Featured</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {featured.slice(0, 4).map((p) => <ProductCard key={p.id} product={p} />)}
+          </div>
+        </section>
+      )}
+
+      {homeCategories.length > 0 && (
+        <section className="container-page mb-16">
+          <h2 className="section-heading mb-6">Shop by category</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {homeCategories.map((c) => (
+              <Link key={c.id} to={`/category/${c.slug}`} className="product-card group block">
+                <div className="aspect-square rounded-lg overflow-hidden bg-muted mb-4">
+                  <img src={c.image_url || '/placeholder.svg'} alt={c.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
+                </div>
+                <h3 className="text-sm font-medium text-foreground">{c.name}</h3>
+                {c.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{c.description}</p>}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {affiliates.length > 0 && (
         <section className="container-page mb-16">
