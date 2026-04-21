@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ExternalLink, ShoppingBag, Download, Star } from 'lucide-react';
+import { ExternalLink, ShoppingBag, Download, Star, Flame, Sparkles } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { DbProduct } from '@/hooks/useProducts';
@@ -12,10 +12,13 @@ export default function ProductCard({ product }: Props) {
   const addItem = useCartStore((s) => s.addItem);
   const { format } = useCurrency();
 
+  const isSoldOut = product.status === 'sold_out' ||
+    (product.type === 'physical' && (product.stock_quantity ?? 0) <= 0 && (!product.variants || product.variants.length === 0));
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (product.type === 'affiliate') return;
+    if (product.type === 'affiliate' || isSoldOut) return;
     const variant = product.variants?.[0];
     addItem({
       productId: product.id,
@@ -31,11 +34,35 @@ export default function ProductCard({ product }: Props) {
 
   const handleAffiliateClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Best-effort log
     import('@/integrations/supabase/client').then(({ supabase }) => {
       supabase.from('affiliate_clicks').insert({ product_id: product.id });
     });
   };
+
+  const Badges = () => (
+    <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+      {product.is_bestseller && (
+        <span className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 shadow">
+          <Flame size={10} /> Bestseller
+        </span>
+      )}
+      {product.is_featured && !product.is_bestseller && (
+        <span className="bg-foreground text-background text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1 shadow">
+          <Sparkles size={10} /> Featured
+        </span>
+      )}
+      {isSoldOut && (
+        <span className="bg-muted text-muted-foreground text-[10px] px-2 py-0.5 rounded-full font-medium shadow">
+          Sold out
+        </span>
+      )}
+      {product.compare_at_price && Number(product.compare_at_price) > Number(product.price) && (
+        <span className="bg-destructive text-destructive-foreground text-[10px] px-2 py-0.5 rounded-full font-medium shadow">
+          Sale
+        </span>
+      )}
+    </div>
+  );
 
   if (product.type === 'affiliate') {
     return (
@@ -46,7 +73,8 @@ export default function ProductCard({ product }: Props) {
         onClick={handleAffiliateClick}
         className="product-card group block"
       >
-        <div className="aspect-square rounded-lg overflow-hidden bg-muted mb-4">
+        <div className="aspect-square rounded-lg overflow-hidden bg-muted mb-4 relative">
+          <Badges />
           <img
             src={product.images[0] || '/placeholder.svg'}
             alt={product.title}
@@ -84,7 +112,8 @@ export default function ProductCard({ product }: Props) {
 
   return (
     <Link to={`/product/${product.slug}`} className="product-card group block">
-      <div className="aspect-square rounded-lg overflow-hidden bg-muted mb-4">
+      <div className="aspect-square rounded-lg overflow-hidden bg-muted mb-4 relative">
+        <Badges />
         <img
           src={product.images[0] || '/placeholder.svg'}
           alt={product.title}
@@ -115,8 +144,12 @@ export default function ProductCard({ product }: Props) {
             ))}
           </div>
         )}
-        <button onClick={handleAddToCart} className="btn-primary text-xs py-2 px-4 w-full">
-          {product.type === 'digital' ? (
+        <button
+          onClick={handleAddToCart}
+          disabled={isSoldOut}
+          className="btn-primary text-xs py-2 px-4 w-full disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSoldOut ? 'Sold out' : product.type === 'digital' ? (
             <><Download size={14} /> Buy Now</>
           ) : (
             <><ShoppingBag size={14} /> Add to Cart</>
