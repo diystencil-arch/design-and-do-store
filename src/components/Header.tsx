@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Search, User, Menu, X, Heart, MessageCircle } from 'lucide-react';
+import { ShoppingBag, User, Menu, X, Heart, MessageCircle } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useState } from 'react';
+import CurrencySwitcher from '@/components/CurrencySwitcher';
 
 const navLinks = [
   { to: '/tools', label: 'Tools' },
@@ -42,6 +43,7 @@ export default function Header() {
 
         {/* Right icons */}
         <div className="flex items-center gap-3 md:gap-4">
+          <CurrencySwitcher />
           <a
             href={CUSTOM_ORDER_WA}
             target="_blank"
