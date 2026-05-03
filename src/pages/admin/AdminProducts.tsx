@@ -38,6 +38,16 @@ interface Product {
 
 interface Category { id: string; name: string; slug: string; }
 
+interface VariationDraft {
+  id?: string;
+  size: string;
+  material: string;
+  sku: string;
+  stock_quantity: number;
+  price_override: string | number;
+  images: string[];
+}
+
 const empty = {
   title: '', slug: '', type: 'physical' as ProductType, price: 0, compare_at_price: '' as number | string,
   description: '', tags: '', images: [] as string[],
@@ -50,6 +60,7 @@ const empty = {
   video_url: '', video_thumbnail: '',
   meta_title: '', meta_description: '',
   category_ids: [] as string[],
+  variations: [] as VariationDraft[],
 };
 
 const LANGUAGES = [
