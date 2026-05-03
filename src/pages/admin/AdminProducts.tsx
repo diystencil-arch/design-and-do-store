@@ -104,6 +104,7 @@ export default function AdminProducts() {
       digital_formats = (df?.file_formats || []).join(', ');
     }
     const { data: pcs } = await supabase.from('product_categories').select('category_id').eq('product_id', p.id);
+    const { data: vars } = await supabase.from('physical_variants').select('id, size, material, sku, stock_quantity, price_override, images').eq('product_id', p.id);
     setEditing({
       id: p.id, title: p.title, slug: p.slug, type: p.type,
       price: Number(p.price), compare_at_price: p.compare_at_price ?? '',
@@ -120,11 +121,60 @@ export default function AdminProducts() {
       video_url: p.video_url || '', video_thumbnail: p.video_thumbnail || '',
       meta_title: p.meta_title || '', meta_description: p.meta_description || '',
       category_ids: (pcs || []).map((r) => r.category_id),
+      variations: (vars || []).map((v: any) => ({
+        id: v.id, size: v.size || '', material: v.material || '', sku: v.sku || '',
+        stock_quantity: v.stock_quantity ?? 0,
+        price_override: v.price_override ?? '',
+        images: v.images || [],
+      })),
     });
     if (p.type === 'affiliate') {
       const { data: af } = await supabase.from('affiliate_products').select('amazon_url').eq('product_id', p.id).maybeSingle();
       setEditing((prev) => prev ? { ...prev, amazon_url: af?.amazon_url || '' } : prev);
     }
+  };
+
+  const copyListing = async (p: Product) => {
+    if (!confirm(`Duplicate "${p.title}" as a draft?`)) return;
+    let digital_storage_path = '';
+    let digital_formats: string[] = [];
+    if (p.type === 'digital') {
+      const { data: df } = await supabase.from('digital_files').select('storage_path, file_formats').eq('product_id', p.id).maybeSingle();
+      digital_storage_path = df?.storage_path || '';
+      digital_formats = df?.file_formats || [];
+    }
+    const baseSlug = `${p.slug}-copy`;
+    let finalSlug = baseSlug; let n = 1;
+    while (true) {
+      const { data: ex } = await supabase.from('products').select('id').eq('slug', finalSlug).maybeSingle();
+      if (!ex) break;
+      n += 1; finalSlug = `${baseSlug}-${n}`;
+    }
+    const { data: newP, error } = await supabase.from('products').insert({
+      title: `${p.title} (copy)`, slug: finalSlug, type: p.type, price: p.price,
+      compare_at_price: p.compare_at_price, description: p.description, tags: p.tags,
+      images: p.images, status: 'draft', is_active: false,
+      is_bestseller: false, is_featured: false, is_recommended: false,
+      sku: null, barcode: null,
+      stock_quantity: p.stock_quantity, low_stock_threshold: p.low_stock_threshold,
+      personalization_enabled: p.personalization_enabled,
+      personalization_label: p.personalization_label,
+      personalization_max_chars: p.personalization_max_chars,
+      video_url: p.video_url, video_thumbnail: p.video_thumbnail,
+      meta_title: p.meta_title, meta_description: p.meta_description,
+    }).select('id').single();
+    if (error || !newP) { toast({ title: 'Copy failed', description: error?.message, variant: 'destructive' }); return; }
+    // copy categories
+    const { data: pcs } = await supabase.from('product_categories').select('category_id').eq('product_id', p.id);
+    if (pcs?.length) await supabase.from('product_categories').insert(pcs.map((r: any) => ({ product_id: newP.id, category_id: r.category_id })));
+    // copy variations
+    const { data: vars } = await supabase.from('physical_variants').select('size, material, sku, stock_quantity, price_override, images').eq('product_id', p.id);
+    if (vars?.length) await supabase.from('physical_variants').insert(vars.map((v: any) => ({ ...v, product_id: newP.id, sku: null })));
+    if (p.type === 'digital' && digital_storage_path) {
+      await supabase.from('digital_files').insert({ product_id: newP.id, storage_path: digital_storage_path, file_formats: digital_formats });
+    }
+    toast({ title: 'Listing duplicated', description: 'Saved as draft.' });
+    load();
   };
 
   const uploadImages = async (files: FileList) => {
