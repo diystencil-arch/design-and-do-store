@@ -1,11 +1,12 @@
 import { ReactNode } from 'react';
 import { NavLink, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Package, ShoppingBag, FileText, Mail, Users, BarChart3, Megaphone, Wallet, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, FileText, Mail, Users, BarChart3, Megaphone, Wallet, HelpCircle, FolderTree } from 'lucide-react';
 
 const links = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/products', label: 'Products', icon: Package },
+  { to: '/admin/categories', label: 'Categories', icon: FolderTree },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/admin/messages', label: 'Messages', icon: Mail },
   { to: '/admin/stats', label: 'Stats', icon: BarChart3 },
