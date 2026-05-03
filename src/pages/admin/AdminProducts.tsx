@@ -797,6 +797,7 @@ export default function AdminProducts() {
               <Languages size={16} />
             </button>
             <a href={`/products/${p.slug}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground p-1.5"><FileText size={16} /></a>
+            <button onClick={() => copyListing(p)} className="text-muted-foreground hover:text-primary p-1.5" title="Duplicate listing"><Copy size={16} /></button>
             <button onClick={() => startEdit(p)} className="text-muted-foreground hover:text-primary p-1.5"><Edit size={16} /></button>
             <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive p-1.5"><Trash2 size={16} /></button>
           </div>
