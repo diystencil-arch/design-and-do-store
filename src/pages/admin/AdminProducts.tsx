@@ -483,14 +483,14 @@ export default function AdminProducts() {
             <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="auto-from-title" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: slugify(e.target.value) })} />
           </div>
 
-          {/* Type */}
+          {/* Fulfillment + Status */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-muted-foreground font-medium block mb-1">Type</label>
+              <label className="text-xs text-muted-foreground font-medium block mb-1">Fulfillment</label>
               <select className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.type} onChange={(e) => setEditing({ ...editing, type: e.target.value as ProductType })}>
-                <option value="physical">Physical (stencil/wood/acrylic)</option>
-                <option value="digital">Digital (SVG)</option>
-                <option value="affiliate">Affiliate (Amazon)</option>
+                <option value="physical">Physical (we ship it)</option>
+                <option value="digital">Digital (instant download — unlimited stock)</option>
+                <option value="affiliate">Affiliate (Amazon link)</option>
               </select>
             </div>
             <div>
@@ -502,6 +502,33 @@ export default function AdminProducts() {
                 <option value="deactivated">Deactivated (hidden)</option>
               </select>
             </div>
+          </div>
+
+          {/* Categories — primary classification */}
+          <div className="p-3 bg-primary/5 rounded-md border border-primary/20">
+            <label className="text-xs text-foreground font-medium block mb-2">Category * <span className="text-muted-foreground font-normal">(controls which storefront page this shows on)</span></label>
+            {categories.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No categories yet — create some in <a href="/admin/categories" className="text-primary underline">Categories</a>.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {categories.map((c) => {
+                  const active = editing.category_ids.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setEditing({
+                        ...editing,
+                        category_ids: active ? editing.category_ids.filter((id) => id !== c.id) : [...editing.category_ids, c.id]
+                      })}
+                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-background text-muted-foreground hover:border-primary/40'}`}
+                    >
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Pricing */}
