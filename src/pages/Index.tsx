@@ -45,7 +45,7 @@ export default function Index() {
       toast({ title: 'Please enter a valid email', variant: 'destructive' });
       return;
     }
-    const { error } = await supabase.from('email_subscribers').insert({ email: freebieEmail.trim().toLowerCase(), source: 'homepage_freebie' });
+    const { error } = await supabase.from('email_subscribers').insert({ email: freebieEmail.trim().toLowerCase(), source: 'homepage_updates' });
     if (error && !error.message.toLowerCase().includes('duplicate')) {
       toast({ title: 'Could not subscribe', description: error.message, variant: 'destructive' });
       return;
@@ -124,14 +124,14 @@ export default function Index() {
       {homeCategories.length > 0 && (
         <section className="container-page mb-16">
           <h2 className="section-heading mb-6">Shop by category</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="flex flex-wrap gap-2">
             {homeCategories.map((c) => (
-              <Link key={c.id} to={`/category/${c.slug}`} className="product-card group block">
-                <div className="aspect-square rounded-lg overflow-hidden bg-muted mb-4">
-                  <img src={c.image_url || '/placeholder.svg'} alt={c.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
-                </div>
-                <h3 className="text-sm font-medium text-foreground">{c.name}</h3>
-                {c.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{c.description}</p>}
+              <Link
+                key={c.id}
+                to={`/category/${c.slug}`}
+                className="px-4 py-2 rounded-full border border-border bg-card text-sm font-medium text-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                {c.name}
               </Link>
             ))}
           </div>
@@ -176,12 +176,12 @@ export default function Index() {
 
       <section className="container-page mb-16">
         <div className="bg-primary rounded-xl p-8 md:p-12 text-center">
-          <h2 className="text-2xl md:text-3xl font-medium text-primary-foreground mb-3">Get a free SVG design</h2>
+          <h2 className="text-2xl md:text-3xl font-medium text-primary-foreground mb-3">Stay in the loop</h2>
           <p className="text-primary-foreground/80 mb-6 max-w-md mx-auto">
-            Drop your email and we'll send you a beautiful stencil SVG — completely free.
+            Be the first to see new designs, exclusive releases and shop updates — straight to your inbox.
           </p>
           {submitted ? (
-            <p className="text-primary-foreground font-medium">✨ Thanks! Check your inbox.</p>
+            <p className="text-primary-foreground font-medium">✨ You're in. Watch your inbox for what's new.</p>
           ) : (
             <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <input
@@ -192,7 +192,7 @@ export default function Index() {
                 className="flex-1 px-4 py-3 rounded-md bg-primary-foreground text-foreground text-sm placeholder:text-muted-foreground focus:outline-none"
               />
               <button onClick={handleFreebie} className="bg-card text-primary px-6 py-3 rounded-md font-medium hover:opacity-90 transition-opacity whitespace-nowrap">
-                Send me the freebie
+                Subscribe
               </button>
             </div>
           )}

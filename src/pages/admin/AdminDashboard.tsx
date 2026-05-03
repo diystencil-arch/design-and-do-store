@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Package, ShoppingBag, Mail, Users } from 'lucide-react';
+import LowStockWidget from '@/components/admin/LowStockWidget';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ products: 0, orders: 0, messages: 0, subscribers: 0 });
@@ -44,8 +45,11 @@ export default function AdminDashboard() {
       <div className="product-card mt-6">
         <h2 className="font-medium text-foreground mb-2">Welcome to your admin dashboard 🎉</h2>
         <p className="text-sm text-muted-foreground">
-          Use the side nav to manage products (stencils, wood, acrylic, SVG, affiliate tools), view orders and mark them as shipped, write blog posts, read contact messages, and view email subscribers.
+          Use the side nav to manage products, categories, orders, blog posts, contact messages, and subscribers.
         </p>
+      </div>
+      <div className="mt-6">
+        <LowStockWidget />
       </div>
     </AdminLayout>
   );

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Edit, Upload, FileDown, Sparkles, GripVertical, Star, Flame, Eye, EyeOff, Languages, FileText, X } from 'lucide-react';
+import { Plus, Trash2, Edit, Upload, FileDown, Sparkles, GripVertical, Star, Flame, Eye, EyeOff, Languages, FileText, X, Copy } from 'lucide-react';
 import { slugify } from '@/lib/slug';
 
 type ProductType = 'affiliate' | 'physical' | 'digital';
@@ -38,6 +38,16 @@ interface Product {
 
 interface Category { id: string; name: string; slug: string; }
 
+interface VariationDraft {
+  id?: string;
+  size: string;
+  material: string;
+  sku: string;
+  stock_quantity: number;
+  price_override: string | number;
+  images: string[];
+}
+
 const empty = {
   title: '', slug: '', type: 'physical' as ProductType, price: 0, compare_at_price: '' as number | string,
   description: '', tags: '', images: [] as string[],
@@ -50,6 +60,7 @@ const empty = {
   video_url: '', video_thumbnail: '',
   meta_title: '', meta_description: '',
   category_ids: [] as string[],
+  variations: [] as VariationDraft[],
 };
 
 const LANGUAGES = [
@@ -93,6 +104,7 @@ export default function AdminProducts() {
       digital_formats = (df?.file_formats || []).join(', ');
     }
     const { data: pcs } = await supabase.from('product_categories').select('category_id').eq('product_id', p.id);
+    const { data: vars } = await supabase.from('physical_variants').select('id, size, material, sku, stock_quantity, price_override, images').eq('product_id', p.id);
     setEditing({
       id: p.id, title: p.title, slug: p.slug, type: p.type,
       price: Number(p.price), compare_at_price: p.compare_at_price ?? '',
@@ -109,11 +121,60 @@ export default function AdminProducts() {
       video_url: p.video_url || '', video_thumbnail: p.video_thumbnail || '',
       meta_title: p.meta_title || '', meta_description: p.meta_description || '',
       category_ids: (pcs || []).map((r) => r.category_id),
+      variations: (vars || []).map((v: any) => ({
+        id: v.id, size: v.size || '', material: v.material || '', sku: v.sku || '',
+        stock_quantity: v.stock_quantity ?? 0,
+        price_override: v.price_override ?? '',
+        images: v.images || [],
+      })),
     });
     if (p.type === 'affiliate') {
       const { data: af } = await supabase.from('affiliate_products').select('amazon_url').eq('product_id', p.id).maybeSingle();
       setEditing((prev) => prev ? { ...prev, amazon_url: af?.amazon_url || '' } : prev);
     }
+  };
+
+  const copyListing = async (p: Product) => {
+    if (!confirm(`Duplicate "${p.title}" as a draft?`)) return;
+    let digital_storage_path = '';
+    let digital_formats: string[] = [];
+    if (p.type === 'digital') {
+      const { data: df } = await supabase.from('digital_files').select('storage_path, file_formats').eq('product_id', p.id).maybeSingle();
+      digital_storage_path = df?.storage_path || '';
+      digital_formats = df?.file_formats || [];
+    }
+    const baseSlug = `${p.slug}-copy`;
+    let finalSlug = baseSlug; let n = 1;
+    while (true) {
+      const { data: ex } = await supabase.from('products').select('id').eq('slug', finalSlug).maybeSingle();
+      if (!ex) break;
+      n += 1; finalSlug = `${baseSlug}-${n}`;
+    }
+    const { data: newP, error } = await supabase.from('products').insert({
+      title: `${p.title} (copy)`, slug: finalSlug, type: p.type, price: p.price,
+      compare_at_price: p.compare_at_price, description: p.description, tags: p.tags,
+      images: p.images, status: 'draft', is_active: false,
+      is_bestseller: false, is_featured: false, is_recommended: false,
+      sku: null, barcode: null,
+      stock_quantity: p.stock_quantity, low_stock_threshold: p.low_stock_threshold,
+      personalization_enabled: p.personalization_enabled,
+      personalization_label: p.personalization_label,
+      personalization_max_chars: p.personalization_max_chars,
+      video_url: p.video_url, video_thumbnail: p.video_thumbnail,
+      meta_title: p.meta_title, meta_description: p.meta_description,
+    }).select('id').single();
+    if (error || !newP) { toast({ title: 'Copy failed', description: error?.message, variant: 'destructive' }); return; }
+    // copy categories
+    const { data: pcs } = await supabase.from('product_categories').select('category_id').eq('product_id', p.id);
+    if (pcs?.length) await supabase.from('product_categories').insert(pcs.map((r: any) => ({ product_id: newP.id, category_id: r.category_id })));
+    // copy variations
+    const { data: vars } = await supabase.from('physical_variants').select('size, material, sku, stock_quantity, price_override, images').eq('product_id', p.id);
+    if (vars?.length) await supabase.from('physical_variants').insert(vars.map((v: any) => ({ ...v, product_id: newP.id, sku: null })));
+    if (p.type === 'digital' && digital_storage_path) {
+      await supabase.from('digital_files').insert({ product_id: newP.id, storage_path: digital_storage_path, file_formats: digital_formats });
+    }
+    toast({ title: 'Listing duplicated', description: 'Saved as draft.' });
+    load();
   };
 
   const uploadImages = async (files: FileList) => {
@@ -319,9 +380,47 @@ export default function AdminProducts() {
         await supabase.from('digital_files').insert({ product_id: productId, storage_path: editing.digital_storage_path, file_formats: formats });
       }
     }
+
+    // Variations (physical products only)
+    if (productId && editing.type === 'physical') {
+      const incomingIds = editing.variations.filter((v) => v.id).map((v) => v.id as string);
+      const { data: existingVars } = await supabase.from('physical_variants').select('id').eq('product_id', productId);
+      const toDelete = (existingVars || []).map((v: any) => v.id).filter((id: string) => !incomingIds.includes(id));
+      if (toDelete.length) await supabase.from('physical_variants').delete().in('id', toDelete);
+      for (const v of editing.variations) {
+        const row = {
+          product_id: productId,
+          size: v.size || null,
+          material: v.material || null,
+          sku: v.sku || null,
+          stock_quantity: Number(v.stock_quantity) || 0,
+          price_override: v.price_override === '' || v.price_override === null ? null : Number(v.price_override),
+          images: v.images || [],
+        };
+        if (v.id) await supabase.from('physical_variants').update(row).eq('id', v.id);
+        else await supabase.from('physical_variants').insert(row);
+      }
+    }
+
     toast({ title: 'Saved' });
     setEditing(null);
     load();
+  };
+
+  const uploadVariationImage = async (vIdx: number, files: FileList) => {
+    if (!editing) return;
+    const newUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split('.').pop();
+      const path = `${Date.now()}-v${vIdx}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: false, contentType: file.type });
+      if (error) { toast({ title: 'Upload failed', description: error.message, variant: 'destructive' }); continue; }
+      const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+      newUrls.push(data.publicUrl);
+    }
+    const variations = [...editing.variations];
+    variations[vIdx] = { ...variations[vIdx], images: [...variations[vIdx].images, ...newUrls] };
+    setEditing({ ...editing, variations });
   };
 
   const remove = async (id: string) => {
@@ -384,14 +483,14 @@ export default function AdminProducts() {
             <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="auto-from-title" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: slugify(e.target.value) })} />
           </div>
 
-          {/* Type */}
+          {/* Fulfillment + Status */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-muted-foreground font-medium block mb-1">Type</label>
+              <label className="text-xs text-muted-foreground font-medium block mb-1">Fulfillment</label>
               <select className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editing.type} onChange={(e) => setEditing({ ...editing, type: e.target.value as ProductType })}>
-                <option value="physical">Physical (stencil/wood/acrylic)</option>
-                <option value="digital">Digital (SVG)</option>
-                <option value="affiliate">Affiliate (Amazon)</option>
+                <option value="physical">Physical (we ship it)</option>
+                <option value="digital">Digital (instant download — unlimited stock)</option>
+                <option value="affiliate">Affiliate (Amazon link)</option>
               </select>
             </div>
             <div>
@@ -403,6 +502,33 @@ export default function AdminProducts() {
                 <option value="deactivated">Deactivated (hidden)</option>
               </select>
             </div>
+          </div>
+
+          {/* Categories — primary classification */}
+          <div className="p-3 bg-primary/5 rounded-md border border-primary/20">
+            <label className="text-xs text-foreground font-medium block mb-2">Category * <span className="text-muted-foreground font-normal">(controls which storefront page this shows on)</span></label>
+            {categories.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No categories yet — create some in <a href="/admin/categories" className="text-primary underline">Categories</a>.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {categories.map((c) => {
+                  const active = editing.category_ids.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setEditing({
+                        ...editing,
+                        category_ids: active ? editing.category_ids.filter((id) => id !== c.id) : [...editing.category_ids, c.id]
+                      })}
+                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-background text-muted-foreground hover:border-primary/40'}`}
+                    >
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Pricing */}
@@ -459,27 +585,38 @@ export default function AdminProducts() {
             <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="wood, rustic, wedding" value={editing.tags} onChange={(e) => setEditing({ ...editing, tags: e.target.value })} />
           </div>
 
-          {/* Categories */}
-          {categories.length > 0 && (
-            <div>
-              <label className="text-xs text-muted-foreground font-medium block mb-2">Categories</label>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((c) => {
-                  const active = editing.category_ids.includes(c.id);
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => setEditing({
-                        ...editing,
-                        category_ids: active ? editing.category_ids.filter((id) => id !== c.id) : [...editing.category_ids, c.id]
-                      })}
-                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/40'}`}
-                    >
-                      {c.name}
-                    </button>
-                  );
-                })}
+          {/* Variations (physical only) */}
+          {editing.type === 'physical' && (
+            <div className="p-3 bg-muted/30 rounded-md space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-foreground">Variations (size, material, etc.)</label>
+                <button type="button" onClick={() => setEditing({ ...editing, variations: [...editing.variations, { size: '', material: '', sku: '', stock_quantity: 0, price_override: '', images: [] }] })} className="text-xs text-primary hover:underline flex items-center gap-1"><Plus size={12} /> Add variation</button>
               </div>
+              {editing.variations.length === 0 && <p className="text-xs text-muted-foreground">No variations — single SKU using the price/stock above.</p>}
+              {editing.variations.map((v, i) => (
+                <div key={i} className="border border-border rounded-md p-3 space-y-2 bg-background">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <input className="px-2 py-1.5 border border-border rounded text-sm bg-background" placeholder="Size (e.g. 8x10)" value={v.size} onChange={(e) => { const a = [...editing.variations]; a[i] = { ...a[i], size: e.target.value }; setEditing({ ...editing, variations: a }); }} />
+                    <input className="px-2 py-1.5 border border-border rounded text-sm bg-background" placeholder="Material/option" value={v.material} onChange={(e) => { const a = [...editing.variations]; a[i] = { ...a[i], material: e.target.value }; setEditing({ ...editing, variations: a }); }} />
+                    <input className="px-2 py-1.5 border border-border rounded text-sm bg-background" placeholder="SKU" value={v.sku} onChange={(e) => { const a = [...editing.variations]; a[i] = { ...a[i], sku: e.target.value }; setEditing({ ...editing, variations: a }); }} />
+                    <input type="number" className="px-2 py-1.5 border border-border rounded text-sm bg-background" placeholder="Stock" value={v.stock_quantity} onChange={(e) => { const a = [...editing.variations]; a[i] = { ...a[i], stock_quantity: parseInt(e.target.value) || 0 }; setEditing({ ...editing, variations: a }); }} />
+                    <input type="number" step="0.01" className="px-2 py-1.5 border border-border rounded text-sm bg-background" placeholder="Price (optional)" value={v.price_override as any} onChange={(e) => { const a = [...editing.variations]; a[i] = { ...a[i], price_override: e.target.value }; setEditing({ ...editing, variations: a }); }} />
+                  </div>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {v.images.map((src, ii) => (
+                      <div key={src + ii} className="relative w-14 h-14 rounded overflow-hidden border border-border group">
+                        <img src={src} alt="" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => { const a = [...editing.variations]; a[i] = { ...a[i], images: a[i].images.filter((_, j) => j !== ii) }; setEditing({ ...editing, variations: a }); }} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100"><X size={10} /></button>
+                      </div>
+                    ))}
+                    <label className="w-14 h-14 border-2 border-dashed border-border rounded flex items-center justify-center text-muted-foreground hover:border-primary cursor-pointer">
+                      <Upload size={14} />
+                      <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files && uploadVariationImage(i, e.target.files)} />
+                    </label>
+                    <button type="button" onClick={() => setEditing({ ...editing, variations: editing.variations.filter((_, j) => j !== i) })} className="ml-auto text-xs text-destructive hover:underline">Remove variation</button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -660,6 +797,7 @@ export default function AdminProducts() {
               <Languages size={16} />
             </button>
             <a href={`/products/${p.slug}`} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground p-1.5"><FileText size={16} /></a>
+            <button onClick={() => copyListing(p)} className="text-muted-foreground hover:text-primary p-1.5" title="Duplicate listing"><Copy size={16} /></button>
             <button onClick={() => startEdit(p)} className="text-muted-foreground hover:text-primary p-1.5"><Edit size={16} /></button>
             <button onClick={() => remove(p.id)} className="text-muted-foreground hover:text-destructive p-1.5"><Trash2 size={16} /></button>
           </div>

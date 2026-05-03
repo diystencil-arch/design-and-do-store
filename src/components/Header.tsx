@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Search, User, Menu, X, Heart, MessageCircle } from 'lucide-react';
+import { ShoppingBag, User, Menu, X, Heart, MessageCircle } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useState } from 'react';
+import CurrencySwitcher from '@/components/CurrencySwitcher';
 
 const navLinks = [
   { to: '/tools', label: 'Tools' },
@@ -12,7 +13,7 @@ const navLinks = [
   { to: '/blog', label: 'Blog' },
 ];
 
-const CUSTOM_ORDER_WA = 'https://wa.me/15197818540?text=' + encodeURIComponent('Hi! I would like to place a custom order. Here are the details:');
+const CUSTOM_ORDER_WA = 'https://wa.me/16475724095?text=' + encodeURIComponent('Hi! I would like to place a custom order. Here are the details:');
 
 export default function Header() {
   const totalItems = useCartStore((s) => s.totalItems());
@@ -42,6 +43,7 @@ export default function Header() {
 
         {/* Right icons */}
         <div className="flex items-center gap-3 md:gap-4">
+          <CurrencySwitcher />
           <a
             href={CUSTOM_ORDER_WA}
             target="_blank"
