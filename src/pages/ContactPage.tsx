@@ -4,8 +4,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 const EMAIL = 'diystencil@gmail.com';
-const WHATSAPP = '15197818540';
-const WHATSAPP_DISPLAY = '+1 (519) 781-8540';
+const WHATSAPP = '16475724095';
+const WHATSAPP_DISPLAY = '+1 (647) 572-4095';
 
 export default function ContactPage() {
   const { toast } = useToast();

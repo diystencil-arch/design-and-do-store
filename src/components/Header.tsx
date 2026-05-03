@@ -12,7 +12,7 @@ const navLinks = [
   { to: '/blog', label: 'Blog' },
 ];
 
-const CUSTOM_ORDER_WA = 'https://wa.me/15197818540?text=' + encodeURIComponent('Hi! I would like to place a custom order. Here are the details:');
+const CUSTOM_ORDER_WA = 'https://wa.me/16475724095?text=' + encodeURIComponent('Hi! I would like to place a custom order. Here are the details:');
 
 export default function Header() {
   const totalItems = useCartStore((s) => s.totalItems());
