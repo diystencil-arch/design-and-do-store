@@ -162,6 +162,7 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          parent_id: string | null
           show_on_home: boolean
           slug: string
           sort_order: number
@@ -173,6 +174,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          parent_id?: string | null
           show_on_home?: boolean
           slug: string
           sort_order?: number
@@ -184,12 +186,21 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          parent_id?: string | null
           show_on_home?: boolean
           slug?: string
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contact_messages: {
         Row: {
@@ -464,6 +475,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          images: string[]
           material: string | null
           price_override: number | null
           product_id: string
@@ -474,6 +486,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          images?: string[]
           material?: string | null
           price_override?: number | null
           product_id: string
@@ -484,6 +497,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          images?: string[]
           material?: string | null
           price_override?: number | null
           product_id?: string
