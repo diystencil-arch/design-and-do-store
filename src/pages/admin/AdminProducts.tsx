@@ -585,27 +585,38 @@ export default function AdminProducts() {
             <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="wood, rustic, wedding" value={editing.tags} onChange={(e) => setEditing({ ...editing, tags: e.target.value })} />
           </div>
 
-          {/* Categories */}
-          {categories.length > 0 && (
-            <div>
-              <label className="text-xs text-muted-foreground font-medium block mb-2">Categories</label>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((c) => {
-                  const active = editing.category_ids.includes(c.id);
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => setEditing({
-                        ...editing,
-                        category_ids: active ? editing.category_ids.filter((id) => id !== c.id) : [...editing.category_ids, c.id]
-                      })}
-                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:border-primary/40'}`}
-                    >
-                      {c.name}
-                    </button>
-                  );
-                })}
+          {/* Variations (physical only) */}
+          {editing.type === 'physical' && (
+            <div className="p-3 bg-muted/30 rounded-md space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-foreground">Variations (size, material, etc.)</label>
+                <button type="button" onClick={() => setEditing({ ...editing, variations: [...editing.variations, { size: '', material: '', sku: '', stock_quantity: 0, price_override: '', images: [] }] })} className="text-xs text-primary hover:underline flex items-center gap-1"><Plus size={12} /> Add variation</button>
               </div>
+              {editing.variations.length === 0 && <p className="text-xs text-muted-foreground">No variations — single SKU using the price/stock above.</p>}
+              {editing.variations.map((v, i) => (
+                <div key={i} className="border border-border rounded-md p-3 space-y-2 bg-background">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <input className="px-2 py-1.5 border border-border rounded text-sm bg-background" placeholder="Size (e.g. 8x10)" value={v.size} onChange={(e) => { const a = [...editing.variations]; a[i] = { ...a[i], size: e.target.value }; setEditing({ ...editing, variations: a }); }} />
+                    <input className="px-2 py-1.5 border border-border rounded text-sm bg-background" placeholder="Material/option" value={v.material} onChange={(e) => { const a = [...editing.variations]; a[i] = { ...a[i], material: e.target.value }; setEditing({ ...editing, variations: a }); }} />
+                    <input className="px-2 py-1.5 border border-border rounded text-sm bg-background" placeholder="SKU" value={v.sku} onChange={(e) => { const a = [...editing.variations]; a[i] = { ...a[i], sku: e.target.value }; setEditing({ ...editing, variations: a }); }} />
+                    <input type="number" className="px-2 py-1.5 border border-border rounded text-sm bg-background" placeholder="Stock" value={v.stock_quantity} onChange={(e) => { const a = [...editing.variations]; a[i] = { ...a[i], stock_quantity: parseInt(e.target.value) || 0 }; setEditing({ ...editing, variations: a }); }} />
+                    <input type="number" step="0.01" className="px-2 py-1.5 border border-border rounded text-sm bg-background" placeholder="Price (optional)" value={v.price_override as any} onChange={(e) => { const a = [...editing.variations]; a[i] = { ...a[i], price_override: e.target.value }; setEditing({ ...editing, variations: a }); }} />
+                  </div>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {v.images.map((src, ii) => (
+                      <div key={src + ii} className="relative w-14 h-14 rounded overflow-hidden border border-border group">
+                        <img src={src} alt="" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => { const a = [...editing.variations]; a[i] = { ...a[i], images: a[i].images.filter((_, j) => j !== ii) }; setEditing({ ...editing, variations: a }); }} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100"><X size={10} /></button>
+                      </div>
+                    ))}
+                    <label className="w-14 h-14 border-2 border-dashed border-border rounded flex items-center justify-center text-muted-foreground hover:border-primary cursor-pointer">
+                      <Upload size={14} />
+                      <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files && uploadVariationImage(i, e.target.files)} />
+                    </label>
+                    <button type="button" onClick={() => setEditing({ ...editing, variations: editing.variations.filter((_, j) => j !== i) })} className="ml-auto text-xs text-destructive hover:underline">Remove variation</button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
