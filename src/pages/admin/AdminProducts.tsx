@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Edit, Upload, FileDown, Sparkles, GripVertical, Star, Flame, Eye, EyeOff, Languages, FileText, X } from 'lucide-react';
+import { Plus, Trash2, Edit, Upload, FileDown, Sparkles, GripVertical, Star, Flame, Eye, EyeOff, Languages, FileText, X, Copy } from 'lucide-react';
 import { slugify } from '@/lib/slug';
 
 type ProductType = 'affiliate' | 'physical' | 'digital';
