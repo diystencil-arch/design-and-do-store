@@ -1,6 +1,6 @@
 import { MessageCircle } from 'lucide-react';
 
-const WHATSAPP_NUMBER = '15197818540'; // +1 519 781 8540
+const WHATSAPP_NUMBER = '16475724095'; // +1 647-572-4095
 const WHATSAPP_MESSAGE = encodeURIComponent("Hi DIY Stencil! I have a question about your products.");
 
 export default function WhatsAppButton() {
