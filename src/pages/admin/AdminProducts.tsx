@@ -380,9 +380,47 @@ export default function AdminProducts() {
         await supabase.from('digital_files').insert({ product_id: productId, storage_path: editing.digital_storage_path, file_formats: formats });
       }
     }
+
+    // Variations (physical products only)
+    if (productId && editing.type === 'physical') {
+      const incomingIds = editing.variations.filter((v) => v.id).map((v) => v.id as string);
+      const { data: existingVars } = await supabase.from('physical_variants').select('id').eq('product_id', productId);
+      const toDelete = (existingVars || []).map((v: any) => v.id).filter((id: string) => !incomingIds.includes(id));
+      if (toDelete.length) await supabase.from('physical_variants').delete().in('id', toDelete);
+      for (const v of editing.variations) {
+        const row = {
+          product_id: productId,
+          size: v.size || null,
+          material: v.material || null,
+          sku: v.sku || null,
+          stock_quantity: Number(v.stock_quantity) || 0,
+          price_override: v.price_override === '' || v.price_override === null ? null : Number(v.price_override),
+          images: v.images || [],
+        };
+        if (v.id) await supabase.from('physical_variants').update(row).eq('id', v.id);
+        else await supabase.from('physical_variants').insert(row);
+      }
+    }
+
     toast({ title: 'Saved' });
     setEditing(null);
     load();
+  };
+
+  const uploadVariationImage = async (vIdx: number, files: FileList) => {
+    if (!editing) return;
+    const newUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split('.').pop();
+      const path = `${Date.now()}-v${vIdx}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: false, contentType: file.type });
+      if (error) { toast({ title: 'Upload failed', description: error.message, variant: 'destructive' }); continue; }
+      const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+      newUrls.push(data.publicUrl);
+    }
+    const variations = [...editing.variations];
+    variations[vIdx] = { ...variations[vIdx], images: [...variations[vIdx].images, ...newUrls] };
+    setEditing({ ...editing, variations });
   };
 
   const remove = async (id: string) => {
