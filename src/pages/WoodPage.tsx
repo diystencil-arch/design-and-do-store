@@ -28,7 +28,6 @@ export default function WoodPage() {
           <div className="mt-10 grid sm:grid-cols-3 gap-4">
             {[
               { title: '1/8" Birch Plywood', body: 'Smooth-sanded both sides, ideal for paint or stain.' },
-              { title: '1/4" Birch Plywood', body: 'Stronger pieces for signs, standees and ornaments.' },
               { title: 'Custom shapes', body: 'Send your SVG/PNG — we cut and ship within 3–5 days.' },
             ].map((c) => (
               <div key={c.title} className="rounded-lg border border-border bg-card p-5">
