@@ -35,6 +35,21 @@ export default function ProductDetailPage() {
     return () => { document.title = 'DIY Stencil'; };
   }, [product]);
 
+  // Track product view (once per product per session)
+  useEffect(() => {
+    if (!product?.id) return;
+    const key = `pv_${product.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    let sid = localStorage.getItem('sid');
+    if (!sid) { sid = crypto.randomUUID(); localStorage.setItem('sid', sid); }
+    supabase.from('product_views').insert({
+      product_id: product.id,
+      session_id: sid,
+      referrer: document.referrer || null,
+    }).then(() => {});
+  }, [product?.id]);
+
   if (loading) {
     return <div className="container-page py-20 text-center text-muted-foreground">Loading…</div>;
   }

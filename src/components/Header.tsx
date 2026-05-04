@@ -3,6 +3,7 @@ import { ShoppingBag, User, Menu, X, Heart, MessageCircle } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useState } from 'react';
 import CurrencySwitcher from '@/components/CurrencySwitcher';
+import FestivalBanner from '@/components/FestivalBanner';
 
 const navLinks = [
   { to: '/tools', label: 'Tools' },
@@ -22,6 +23,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-card border-b border-border">
+      <FestivalBanner />
       <div className="container-page flex items-center justify-between h-16">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
