@@ -21,6 +21,27 @@ export default function CheckoutPage() {
   const [processing, setProcessing] = useState(false);
   const ppRef = useRef<HTMLDivElement>(null);
   const hasPhysical = items.some((i) => i.type === 'physical');
+  const [stripeLoading, setStripeLoading] = useState(false);
+
+  const payWithStripe = async () => {
+    if (!email) { toast({ title: 'Email required', description: 'Please enter your email first.', variant: 'destructive' }); return; }
+    setStripeLoading(true);
+    const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
+      body: {
+        items: items.map(i => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity, title: i.title })),
+        email,
+        shippingAddress: hasPhysical ? address : null,
+        userId: user?.id || null,
+        currency: 'usd',
+      },
+    });
+    setStripeLoading(false);
+    if (error || !data?.url) {
+      toast({ title: 'Stripe error', description: error?.message || 'Could not start checkout', variant: 'destructive' });
+      return;
+    }
+    window.location.href = data.url;
+  };
 
   useEffect(() => {
     if (window.paypal) { setPaypalReady(true); return; }
@@ -110,14 +131,29 @@ export default function CheckoutPage() {
           )}
 
           <section>
-            <h2 className="text-lg font-medium text-foreground mb-4">Pay with PayPal</h2>
-            <p className="text-sm text-muted-foreground mb-4">Pay with your PayPal balance, credit card, or debit card. No PayPal account required.</p>
+            <h2 className="text-lg font-medium text-foreground mb-4">Payment</h2>
+            <p className="text-sm text-muted-foreground mb-4">Choose your preferred payment method.</p>
+
+            <button
+              onClick={payWithStripe}
+              disabled={stripeLoading}
+              className="btn-primary w-full justify-center mb-4"
+            >
+              {stripeLoading ? 'Redirecting…' : 'Pay with card (Stripe)'}
+            </button>
+
+            <div className="flex items-center gap-3 my-4">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">or</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
             {processing && <p className="text-sm text-accent mb-3">Processing your order…</p>}
             <div ref={ppRef} className="min-h-[150px]" />
             {!paypalReady && <p className="text-xs text-muted-foreground">Loading PayPal…</p>}
             <p className="text-xs text-center text-muted-foreground mt-3">
               <Lock size={10} className="inline mr-1" />
-              Secured by PayPal · 256-bit SSL encryption
+              Secured by Stripe & PayPal · 256-bit SSL encryption
             </p>
           </section>
         </div>
