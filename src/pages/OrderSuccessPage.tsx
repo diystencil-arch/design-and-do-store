@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Download, Mail } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useCartStore } from '@/stores/cartStore';
 
 export default function OrderSuccessPage() {
   const [params] = useSearchParams();
-  const orderId = params.get('order');
+  const [orderId, setOrderId] = useState<string | null>(params.get('order'));
+  const stripeSession = params.get('stripe_session');
   const [downloads, setDownloads] = useState<Array<{ title: string; url: string }>>([]);
+  const [verifying, setVerifying] = useState(!!stripeSession);
+  const { clearCart } = useCartStore();
 
   useEffect(() => {
     const stash = sessionStorage.getItem('lastDownloads');
@@ -15,10 +20,25 @@ export default function OrderSuccessPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!stripeSession) return;
+    (async () => {
+      const { data, error } = await supabase.functions.invoke('stripe-verify-session', {
+        body: { sessionId: stripeSession },
+      });
+      setVerifying(false);
+      if (!error && data?.orderId) {
+        setOrderId(data.orderId);
+        if (data.downloads?.length) setDownloads(data.downloads);
+        clearCart();
+      }
+    })();
+  }, [stripeSession]);
+
   return (
     <div className="container-page py-16 max-w-2xl text-center">
       <CheckCircle2 className="mx-auto text-primary mb-4" size={48} />
-      <h1 className="section-heading mb-2">Thank you for your order!</h1>
+      <h1 className="section-heading mb-2">{verifying ? 'Confirming your payment…' : 'Thank you for your order!'}</h1>
       {orderId && <p className="text-sm text-muted-foreground mb-2">Order #{orderId.slice(0, 8)}</p>}
       <p className="text-sm text-muted-foreground mb-8 flex items-center justify-center gap-2">
         <Mail size={14} /> A confirmation has been emailed to you.
