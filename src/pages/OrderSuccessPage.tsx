@@ -38,7 +38,7 @@ export default function OrderSuccessPage() {
   return (
     <div className="container-page py-16 max-w-2xl text-center">
       <CheckCircle2 className="mx-auto text-primary mb-4" size={48} />
-      <h1 className="section-heading mb-2">Thank you for your order!</h1>
+      <h1 className="section-heading mb-2">{verifying ? 'Confirming your payment…' : 'Thank you for your order!'}</h1>
       {orderId && <p className="text-sm text-muted-foreground mb-2">Order #{orderId.slice(0, 8)}</p>}
       <p className="text-sm text-muted-foreground mb-8 flex items-center justify-center gap-2">
         <Mail size={14} /> A confirmation has been emailed to you.
