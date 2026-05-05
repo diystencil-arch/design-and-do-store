@@ -3,9 +3,10 @@ import { useProductBySlug, useRecommendedProducts } from '@/hooks/useProducts';
 import { useCartStore } from '@/stores/cartStore';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ShoppingBag, Download, ExternalLink, Star, ArrowLeft, Check, Minus, Plus, Flame, Sparkles, Package } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import ProductCard from '@/components/ProductCard';
+import { getSessionId, logFunnel } from '@/lib/funnel';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -35,19 +36,36 @@ export default function ProductDetailPage() {
     return () => { document.title = 'DIY Stencil'; };
   }, [product]);
 
-  // Track product view (once per product per session)
+  // Track view + view duration (deduped per session by DB unique index)
+  const viewStartRef = useRef<number>(0);
+  const viewIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!product?.id) return;
-    const key = `pv_${product.id}`;
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, '1');
-    let sid = localStorage.getItem('sid');
-    if (!sid) { sid = crypto.randomUUID(); localStorage.setItem('sid', sid); }
-    supabase.from('product_views').insert({
-      product_id: product.id,
-      session_id: sid,
-      referrer: document.referrer || null,
-    }).then(() => {});
+    const sid = getSessionId();
+    viewStartRef.current = Date.now();
+    (async () => {
+      const { data } = await supabase
+        .from('product_views')
+        .insert({ product_id: product.id, session_id: sid, referrer: document.referrer || null })
+        .select('id')
+        .maybeSingle();
+      if (data?.id) viewIdRef.current = data.id;
+    })();
+    logFunnel('view', product.id);
+
+    const sendDuration = () => {
+      const ms = Date.now() - viewStartRef.current;
+      if (ms < 1000 || !viewIdRef.current) return;
+      // fire-and-forget
+      supabase.from('product_views').update({ view_duration_ms: ms }).eq('id', viewIdRef.current).then(() => {});
+    };
+    const onHide = () => sendDuration();
+    window.addEventListener('beforeunload', onHide);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') sendDuration(); });
+    return () => {
+      sendDuration();
+      window.removeEventListener('beforeunload', onHide);
+    };
   }, [product?.id]);
 
   if (loading) {
@@ -86,6 +104,7 @@ export default function ProductDetailPage() {
       type: product.type,
       variantLabel: variant ? `${variant.size ?? ''} · ${variant.material ?? ''}`.trim() : undefined,
     });
+    logFunnel('add_to_cart', product.id, { quantity, price: displayPrice });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -232,25 +251,22 @@ export default function ProductDetailPage() {
 
               {product.variants && product.variants.length > 0 && (
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Size</p>
-                  <div className="flex flex-wrap gap-2">
+                  <label className="block text-sm text-muted-foreground mb-2">Size</label>
+                  <select
+                    value={selectedVariant}
+                    onChange={(e) => setSelectedVariant(parseInt(e.target.value))}
+                    className="w-full md:w-64 px-3 py-2.5 border border-border rounded-md text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  >
                     {product.variants.map((v, i) => (
-                      <button
-                        key={v.id}
-                        onClick={() => setSelectedVariant(i)}
-                        className={`px-4 py-2 border rounded-md text-sm transition-colors ${
-                          i === selectedVariant
-                            ? 'border-primary bg-primary/10 text-foreground'
-                            : 'border-border text-muted-foreground hover:border-primary/40'
-                        }`}
-                      >
-                        {v.size}
-                      </button>
+                      <option key={v.id} value={i}>
+                        {[v.size, v.material].filter(Boolean).join(' · ')}
+                        {v.stock_quantity <= 0 ? ' — Out of stock' : ''}
+                      </option>
                     ))}
-                  </div>
+                  </select>
                   {variant && (
                     <p className="text-xs text-muted-foreground mt-2">
-                      {variant.material} · {variant.stock_quantity > 0 ? `${variant.stock_quantity} in stock` : 'Out of stock'}
+                      {variant.stock_quantity > 0 ? `${variant.stock_quantity} in stock` : 'Out of stock'}
                     </p>
                   )}
                 </div>

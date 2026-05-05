@@ -7,6 +7,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import AnalyticsScripts from "@/components/AnalyticsScripts";
+import PromoBanner from "@/components/PromoBanner";
 import Index from "./pages/Index";
 import ContactPage from "./pages/ContactPage";
 import FaqPage from "./pages/FaqPage";
@@ -40,6 +42,8 @@ import AdminStats from "./pages/admin/AdminStats";
 import AdminMarketing from "./pages/admin/AdminMarketing";
 import AdminFinances from "./pages/admin/AdminFinances";
 import AdminHelp from "./pages/admin/AdminHelp";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminPromos from "./pages/admin/AdminPromos";
 import NotFound from "./pages/NotFound";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -59,6 +63,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <AnalyticsScripts />
             <Header />
             <CartDrawer />
             <main className="min-h-[60vh]">
@@ -93,6 +98,8 @@ const App = () => (
                 <Route path="/admin/marketing" element={<AdminMarketing />} />
                 <Route path="/admin/finances" element={<AdminFinances />} />
                 <Route path="/admin/help" element={<AdminHelp />} />
+                <Route path="/admin/settings" element={<AdminSettings />} />
+                <Route path="/admin/promos" element={<AdminPromos />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/faq" element={<FaqPage />} />
                 <Route path="/shipping" element={<ShippingPage />} />
@@ -101,6 +108,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
+            <PromoBanner position="bottom" />
             <Footer />
             <WhatsAppButton />
           </BrowserRouter>

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import ProductCard from '@/components/ProductCard';
+import { useCategories } from '@/hooks/useProducts';
 import { DbProduct } from '@/hooks/useProducts';
 import { Filter, ArrowUpDown } from 'lucide-react';
 
@@ -17,6 +18,8 @@ type Sort = 'newest' | 'price_asc' | 'price_desc' | 'bestselling';
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { categories } = useCategories();
   const [category, setCategory] = useState<{ name: string; description: string | null } | null>(null);
   const [products, setProducts] = useState<DbProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,7 +96,21 @@ export default function CategoryPage() {
 
   return (
     <div className="container-page py-10">
-      <h1 className="section-heading mb-2">{category.name}</h1>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-2">
+        <h1 className="section-heading">{category.name}</h1>
+        <label className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Browse category:</span>
+          <select
+            value={slug}
+            onChange={(e) => navigate(`/category/${e.target.value}`)}
+            className="bg-background border border-border rounded-md px-3 py-2 text-sm min-w-[180px]"
+          >
+            {categories.map((c) => (
+              <option key={c.id} value={c.slug}>{c.name}</option>
+            ))}
+          </select>
+        </label>
+      </div>
       {category.description && <p className="text-muted-foreground mb-8 max-w-2xl">{category.description}</p>}
 
       <div className="grid md:grid-cols-[240px_1fr] gap-8">

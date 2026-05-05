@@ -14,7 +14,7 @@ export default function Index() {
   const { products: digitals } = useProductsByType('digital');
   const { products: featured } = useFeaturedProducts(8);
   const { categories } = useCategories();
-  const homeCategories = categories.filter((c) => c.show_on_home);
+  const homeCategories = categories;
   const [freebieEmail, setFreebieEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

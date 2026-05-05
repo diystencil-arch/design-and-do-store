@@ -438,13 +438,93 @@ export default function AdminProducts() {
 
   const filtered = filter === 'all' ? products : products.filter((p) => p.status === filter);
 
+  const exportCSV = () => {
+    const headers = ['id','title','slug','type','status','price','compare_at_price','stock_quantity','sku','barcode','tags','images','description'];
+    const esc = (v: any) => {
+      const s = v == null ? '' : Array.isArray(v) ? v.join('|') : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const rows = [headers.join(',')].concat(
+      products.map((p) => headers.map((h) => esc((p as any)[h])).join(','))
+    );
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `products-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  const importCSV = async (file: File) => {
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).filter(Boolean);
+    if (lines.length < 2) { toast({ title: 'Empty CSV', variant: 'destructive' }); return; }
+    const parseLine = (line: string) => {
+      const out: string[] = []; let cur = ''; let inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (inQ) {
+          if (c === '"' && line[i+1] === '"') { cur += '"'; i++; }
+          else if (c === '"') inQ = false;
+          else cur += c;
+        } else {
+          if (c === ',') { out.push(cur); cur = ''; }
+          else if (c === '"') inQ = true;
+          else cur += c;
+        }
+      }
+      out.push(cur);
+      return out;
+    };
+    const headers = parseLine(lines[0]).map((h) => h.trim());
+    let inserted = 0, updated = 0, errors = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseLine(lines[i]);
+      const row: any = {};
+      headers.forEach((h, idx) => { row[h] = cols[idx] ?? ''; });
+      const payload: any = {
+        title: row.title?.trim(),
+        slug: slugify(row.slug || row.title || ''),
+        type: row.type || 'physical',
+        status: row.status || 'published',
+        price: parseFloat(row.price) || 0,
+        compare_at_price: row.compare_at_price ? parseFloat(row.compare_at_price) : null,
+        stock_quantity: parseInt(row.stock_quantity) || 0,
+        sku: row.sku || null,
+        barcode: row.barcode || null,
+        tags: row.tags ? row.tags.split('|').filter(Boolean) : [],
+        images: row.images ? row.images.split('|').filter(Boolean) : [],
+        description: row.description || null,
+        is_active: (row.status || 'published') !== 'draft' && row.status !== 'deactivated',
+      };
+      if (!payload.title || !payload.slug) { errors++; continue; }
+      if (row.id) {
+        const { error } = await supabase.from('products').update(payload).eq('id', row.id);
+        if (error) errors++; else updated++;
+      } else {
+        const { error } = await supabase.from('products').insert(payload);
+        if (error) errors++; else inserted++;
+      }
+    }
+    toast({ title: 'Import complete', description: `${inserted} added · ${updated} updated · ${errors} errors` });
+    load();
+  };
+
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-2 flex-wrap">
         <h1 className="section-heading">Products</h1>
-        <button onClick={() => setEditing({ ...empty })} className="btn-primary text-sm py-2 px-4">
-          <Plus size={14} /> New product
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={exportCSV} className="btn-outline text-sm py-2 px-3" title="Export all products to CSV">
+            <FileDown size={14} /> Export
+          </button>
+          <label className="btn-outline text-sm py-2 px-3 cursor-pointer" title="Import products from CSV">
+            <Upload size={14} /> Import
+            <input type="file" accept=".csv" className="hidden" onChange={(e) => e.target.files?.[0] && importCSV(e.target.files[0])} />
+          </label>
+          <button onClick={() => setEditing({ ...empty })} className="btn-primary text-sm py-2 px-4">
+            <Plus size={14} /> New product
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-1 mb-4 overflow-x-auto">

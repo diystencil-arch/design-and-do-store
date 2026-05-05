@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { NavLink, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Package, ShoppingBag, FileText, Mail, Users, BarChart3, Megaphone, Wallet, HelpCircle, FolderTree } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, FileText, Mail, Users, BarChart3, Megaphone, Wallet, HelpCircle, FolderTree, Settings, Tag } from 'lucide-react';
 
 const links = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -11,9 +11,11 @@ const links = [
   { to: '/admin/messages', label: 'Messages', icon: Mail },
   { to: '/admin/stats', label: 'Stats', icon: BarChart3 },
   { to: '/admin/marketing', label: 'Marketing', icon: Megaphone },
+  { to: '/admin/promos', label: 'Promos', icon: Tag },
   { to: '/admin/finances', label: 'Finances', icon: Wallet },
   { to: '/admin/blog', label: 'Blog', icon: FileText },
   { to: '/admin/subscribers', label: 'Subscribers', icon: Users },
+  { to: '/admin/settings', label: 'Settings', icon: Settings },
   { to: '/admin/help', label: 'Help', icon: HelpCircle },
 ];
 

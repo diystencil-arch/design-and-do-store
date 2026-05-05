@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { logFunnel } from '@/lib/funnel';
 
 declare global { interface Window { paypal?: any } }
 
@@ -25,6 +26,7 @@ export default function CheckoutPage() {
 
   const payWithStripe = async () => {
     if (!email) { toast({ title: 'Email required', description: 'Please enter your email first.', variant: 'destructive' }); return; }
+    logFunnel('checkout_started', undefined, { provider: 'stripe', items: items.length });
     setStripeLoading(true);
     const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
       body: {
