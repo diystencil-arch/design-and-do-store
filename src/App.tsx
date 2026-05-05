@@ -42,6 +42,8 @@ import AdminStats from "./pages/admin/AdminStats";
 import AdminMarketing from "./pages/admin/AdminMarketing";
 import AdminFinances from "./pages/admin/AdminFinances";
 import AdminHelp from "./pages/admin/AdminHelp";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminPromos from "./pages/admin/AdminPromos";
 import NotFound from "./pages/NotFound";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -96,6 +98,8 @@ const App = () => (
                 <Route path="/admin/marketing" element={<AdminMarketing />} />
                 <Route path="/admin/finances" element={<AdminFinances />} />
                 <Route path="/admin/help" element={<AdminHelp />} />
+                <Route path="/admin/settings" element={<AdminSettings />} />
+                <Route path="/admin/promos" element={<AdminPromos />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/faq" element={<FaqPage />} />
                 <Route path="/shipping" element={<ShippingPage />} />
