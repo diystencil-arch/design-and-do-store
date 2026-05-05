@@ -104,6 +104,7 @@ export default function ProductDetailPage() {
       type: product.type,
       variantLabel: variant ? `${variant.size ?? ''} · ${variant.material ?? ''}`.trim() : undefined,
     });
+    logFunnel('add_to_cart', product.id, { quantity, price: displayPrice });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
