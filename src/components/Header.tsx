@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
-import { ShoppingBag, User, Menu, X, Heart, MessageCircle } from 'lucide-react';
+import { ShoppingBag, User, Menu, X, MessageCircle } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useState } from 'react';
 import CurrencySwitcher from '@/components/CurrencySwitcher';
 import FestivalBanner from '@/components/FestivalBanner';
+import PromoBanner from '@/components/PromoBanner';
+import { useCategories } from '@/hooks/useProducts';
 
-const navLinks = [
+const baseLinks = [
   { to: '/tools', label: 'Tools' },
   { to: '/stencils', label: 'Stencils' },
   { to: '/wood', label: 'Wood' },
@@ -20,30 +22,35 @@ export default function Header() {
   const totalItems = useCartStore((s) => s.totalItems());
   const toggleCart = useCartStore((s) => s.toggleCart);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { categories } = useCategories();
+
+  // Merge static + dynamic category links (avoid duplicates by slug)
+  const dynamicCats = categories
+    .filter((c) => !baseLinks.some((b) => b.to === `/${c.slug}` || b.label.toLowerCase() === c.name.toLowerCase()))
+    .map((c) => ({ to: `/category/${c.slug}`, label: c.name }));
+  const navLinks = [...baseLinks, ...dynamicCats];
 
   return (
     <header className="sticky top-0 z-50 bg-card border-b border-border">
+      <PromoBanner position="top" />
       <FestivalBanner />
       <div className="container-page flex items-center justify-between h-16">
-        {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <img src="/images/logo-banner.png" alt="DIY Stencil" className="h-9 object-contain" />
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-6 overflow-x-auto">
           {navLinks.map((l) => (
             <Link
               key={l.to}
               to={l.to}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors font-medium"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors font-medium whitespace-nowrap"
             >
               {l.label}
             </Link>
           ))}
         </nav>
 
-        {/* Right icons */}
         <div className="flex items-center gap-3 md:gap-4">
           <CurrencySwitcher />
           <a
@@ -54,9 +61,6 @@ export default function Header() {
           >
             <MessageCircle size={14} /> Custom Order
           </a>
-          <Link to="/freebie" className="hidden md:block">
-            <Heart size={20} className="text-muted-foreground hover:text-primary transition-colors" />
-          </Link>
           <Link to="/login" className="hidden md:block">
             <User size={20} className="text-muted-foreground hover:text-primary transition-colors" />
           </Link>
@@ -74,7 +78,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-border bg-card animate-fade-in">
           <nav className="container-page py-4 flex flex-col gap-4">
@@ -97,9 +100,6 @@ export default function Header() {
             >
               <MessageCircle size={16} /> Custom Order on WhatsApp
             </a>
-            <Link to="/freebie" className="text-sm text-primary font-medium py-2" onClick={() => setMobileOpen(false)}>
-              Free SVG ✨
-            </Link>
             <Link to="/login" className="text-sm text-foreground py-2" onClick={() => setMobileOpen(false)}>
               Account
             </Link>
