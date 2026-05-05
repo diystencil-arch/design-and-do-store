@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Download, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCartStore } from '@/stores/cartStore';
+import { logFunnel } from '@/lib/funnel';
 
 export default function OrderSuccessPage() {
   const [params] = useSearchParams();
@@ -18,6 +19,7 @@ export default function OrderSuccessPage() {
       try { setDownloads(JSON.parse(stash)); } catch {}
       sessionStorage.removeItem('lastDownloads');
     }
+    logFunnel('checkout_completed', undefined, { orderId: params.get('order') || stripeSession });
   }, []);
 
   useEffect(() => {
