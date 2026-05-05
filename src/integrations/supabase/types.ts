@@ -344,6 +344,36 @@ export type Database = {
         }
         Relationships: []
       }
+      funnel_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          id: string
+          metadata: Json | null
+          product_id: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -556,6 +586,7 @@ export type Database = {
           referrer: string | null
           session_id: string | null
           user_id: string | null
+          view_duration_ms: number | null
         }
         Insert: {
           created_at?: string
@@ -564,6 +595,7 @@ export type Database = {
           referrer?: string | null
           session_id?: string | null
           user_id?: string | null
+          view_duration_ms?: number | null
         }
         Update: {
           created_at?: string
@@ -572,6 +604,7 @@ export type Database = {
           referrer?: string | null
           session_id?: string | null
           user_id?: string | null
+          view_duration_ms?: number | null
         }
         Relationships: [
           {
@@ -697,6 +730,75 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      promo_banners: {
+        Row: {
+          bg_color: string | null
+          created_at: string
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          link_label: string | null
+          link_url: string | null
+          message: string
+          position: string
+          sort_order: number
+          starts_at: string | null
+          text_color: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          bg_color?: string | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          link_label?: string | null
+          link_url?: string | null
+          message: string
+          position?: string
+          sort_order?: number
+          starts_at?: string | null
+          text_color?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bg_color?: string | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          link_label?: string | null
+          link_url?: string | null
+          message?: string
+          position?: string
+          sort_order?: number
+          starts_at?: string | null
+          text_color?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string | null
         }
         Relationships: []
       }
