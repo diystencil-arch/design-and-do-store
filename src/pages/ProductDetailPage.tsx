@@ -232,25 +232,22 @@ export default function ProductDetailPage() {
 
               {product.variants && product.variants.length > 0 && (
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Size</p>
-                  <div className="flex flex-wrap gap-2">
+                  <label className="block text-sm text-muted-foreground mb-2">Size</label>
+                  <select
+                    value={selectedVariant}
+                    onChange={(e) => setSelectedVariant(parseInt(e.target.value))}
+                    className="w-full md:w-64 px-3 py-2.5 border border-border rounded-md text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  >
                     {product.variants.map((v, i) => (
-                      <button
-                        key={v.id}
-                        onClick={() => setSelectedVariant(i)}
-                        className={`px-4 py-2 border rounded-md text-sm transition-colors ${
-                          i === selectedVariant
-                            ? 'border-primary bg-primary/10 text-foreground'
-                            : 'border-border text-muted-foreground hover:border-primary/40'
-                        }`}
-                      >
-                        {v.size}
-                      </button>
+                      <option key={v.id} value={i}>
+                        {[v.size, v.material].filter(Boolean).join(' · ')}
+                        {v.stock_quantity <= 0 ? ' — Out of stock' : ''}
+                      </option>
                     ))}
-                  </div>
+                  </select>
                   {variant && (
                     <p className="text-xs text-muted-foreground mt-2">
-                      {variant.material} · {variant.stock_quantity > 0 ? `${variant.stock_quantity} in stock` : 'Out of stock'}
+                      {variant.stock_quantity > 0 ? `${variant.stock_quantity} in stock` : 'Out of stock'}
                     </p>
                   )}
                 </div>
