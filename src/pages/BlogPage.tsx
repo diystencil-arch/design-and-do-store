@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 interface Post {
   id: string;
@@ -14,6 +15,8 @@ interface Post {
 export default function BlogPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const { settings } = useSiteSettings();
+  const adHtml = settings.blog_ad_html;
 
   useEffect(() => {
     supabase
@@ -51,6 +54,13 @@ export default function BlogPage() {
             </article>
           ))}
         </div>
+      )}
+
+      {adHtml && (
+        <aside className="mt-12 border-t border-border pt-8">
+          <p className="text-xs text-muted-foreground text-center mb-2 uppercase tracking-wider">Advertisement</p>
+          <div className="flex justify-center" dangerouslySetInnerHTML={{ __html: adHtml }} />
+        </aside>
       )}
     </div>
   );
