@@ -104,6 +104,7 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
+            <PromoBanner position="bottom" />
             <Footer />
             <WhatsAppButton />
           </BrowserRouter>
