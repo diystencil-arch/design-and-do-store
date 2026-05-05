@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { Mail } from 'lucide-react';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 // lucide-react does not export brand icons; use inline SVGs below
 
 const socials = [
@@ -57,6 +59,8 @@ function EtsyIcon({ size = 18 }: { size?: number }) {
 }
 
 export default function Footer() {
+  const { settings } = useSiteSettings();
+  const email = settings.contact_email || 'diystencil@gmail.com';
   return (
     <footer className="border-t border-border mt-20">
       <div className="container-page py-12">
@@ -91,7 +95,7 @@ export default function Footer() {
               <Link to="/acrylic" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Acrylic Cutouts</Link>
               <Link to="/svg" className="text-sm text-muted-foreground hover:text-foreground transition-colors">SVG Files</Link>
               <Link to="/tools" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Craft Tools</Link>
-              <Link to="/freebie" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Free SVG</Link>
+              
             </div>
           </div>
           <div>
@@ -105,11 +109,10 @@ export default function Footer() {
             </div>
           </div>
           <div>
-            <h4 className="text-sm font-medium text-foreground mb-3">Stay in the loop</h4>
-            <p className="text-sm text-muted-foreground mb-3">Get a free SVG when you subscribe.</p>
-            <Link to="/freebie" className="btn-primary text-sm py-2 px-4">
-              Get Free SVG →
-            </Link>
+            <h4 className="text-sm font-medium text-foreground mb-3">Get in touch</h4>
+            <a href={`mailto:${email}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+              <Mail size={14} /> {email}
+            </a>
             <p className="mt-4 text-xs text-muted-foreground">
               Prices in CAD. Auto-converted at checkout based on your location.
             </p>
