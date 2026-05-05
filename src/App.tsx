@@ -7,6 +7,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import AnalyticsScripts from "@/components/AnalyticsScripts";
+import PromoBanner from "@/components/PromoBanner";
 import Index from "./pages/Index";
 import ContactPage from "./pages/ContactPage";
 import FaqPage from "./pages/FaqPage";
@@ -59,6 +61,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <AnalyticsScripts />
             <Header />
             <CartDrawer />
             <main className="min-h-[60vh]">
