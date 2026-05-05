@@ -3,9 +3,10 @@ import { useProductBySlug, useRecommendedProducts } from '@/hooks/useProducts';
 import { useCartStore } from '@/stores/cartStore';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ShoppingBag, Download, ExternalLink, Star, ArrowLeft, Check, Minus, Plus, Flame, Sparkles, Package } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import ProductCard from '@/components/ProductCard';
+import { getSessionId, logFunnel } from '@/lib/funnel';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -35,19 +36,36 @@ export default function ProductDetailPage() {
     return () => { document.title = 'DIY Stencil'; };
   }, [product]);
 
-  // Track product view (once per product per session)
+  // Track view + view duration (deduped per session by DB unique index)
+  const viewStartRef = useRef<number>(0);
+  const viewIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!product?.id) return;
-    const key = `pv_${product.id}`;
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, '1');
-    let sid = localStorage.getItem('sid');
-    if (!sid) { sid = crypto.randomUUID(); localStorage.setItem('sid', sid); }
-    supabase.from('product_views').insert({
-      product_id: product.id,
-      session_id: sid,
-      referrer: document.referrer || null,
-    }).then(() => {});
+    const sid = getSessionId();
+    viewStartRef.current = Date.now();
+    (async () => {
+      const { data } = await supabase
+        .from('product_views')
+        .insert({ product_id: product.id, session_id: sid, referrer: document.referrer || null })
+        .select('id')
+        .maybeSingle();
+      if (data?.id) viewIdRef.current = data.id;
+    })();
+    logFunnel('view', product.id);
+
+    const sendDuration = () => {
+      const ms = Date.now() - viewStartRef.current;
+      if (ms < 1000 || !viewIdRef.current) return;
+      // fire-and-forget
+      supabase.from('product_views').update({ view_duration_ms: ms }).eq('id', viewIdRef.current).then(() => {});
+    };
+    const onHide = () => sendDuration();
+    window.addEventListener('beforeunload', onHide);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') sendDuration(); });
+    return () => {
+      sendDuration();
+      window.removeEventListener('beforeunload', onHide);
+    };
   }, [product?.id]);
 
   if (loading) {
