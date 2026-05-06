@@ -553,8 +553,14 @@ export default function AdminProducts() {
         <div className="product-card mb-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-medium">{editing.id ? 'Edit product' : 'New product'}</h2>
-            <button onClick={() => setEditing(null)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => callAI('all')} disabled={aiLoading === 'all'} className="btn-outline text-xs py-1.5 px-3 flex items-center gap-1">
+                <Sparkles size={12} /> {aiLoading === 'all' ? 'Generating all…' : 'Generate all with AI'}
+              </button>
+              <button onClick={() => setEditing(null)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground -mt-2">Tip: enter a quick title or upload an image, then click <strong>Generate all with AI</strong> to fill title, description, tags, and SEO meta in one click.</p>
 
           {/* Title with AI */}
           <div>
