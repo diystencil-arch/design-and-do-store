@@ -200,12 +200,20 @@ export default function CheckoutPage() {
                 </div>
               ))}
             </div>
+            <div className="border-t border-border pt-3 space-y-2">
+              <div className="flex gap-2">
+                <input type="text" placeholder="Promo code" value={promoInput} onChange={(e) => setPromoInput(e.target.value.toUpperCase())} className="flex-1 px-3 py-2 border border-border rounded-md text-sm bg-background uppercase" />
+                <button onClick={applyPromo} disabled={applyingPromo} className="btn-outline text-sm py-2 px-3">{applyingPromo ? '…' : 'Apply'}</button>
+              </div>
+              {promo && <p className="text-xs text-success">Code <strong>{promo.code}</strong> applied · −${promo.discount.toFixed(2)} <button onClick={() => { setPromo(null); setPromoInput(''); }} className="underline ml-2">remove</button></p>}
+            </div>
             <div className="border-t border-border pt-3 space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="text-foreground">${subtotal().toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="text-foreground">${sub.toFixed(2)}</span></div>
+              {promo && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="text-success">−${discount.toFixed(2)}</span></div>}
               <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span className="text-foreground">{hasPhysical ? 'Calculated after order' : 'Free'}</span></div>
             </div>
             <div className="border-t border-border pt-3 flex justify-between font-medium text-foreground">
-              <span>Total</span><span>${subtotal().toFixed(2)}</span>
+              <span>Total</span><span>${total.toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
               <Lock size={10} /> Secure checkout
