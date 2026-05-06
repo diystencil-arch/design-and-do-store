@@ -2,7 +2,17 @@ import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, Edit, X } from 'lucide-react';
+import { Plus, Trash2, Edit, X, Tag } from 'lucide-react';
+
+interface PromoCode {
+  id: string; code: string; discount_type: string; discount_value: number;
+  min_subtotal: number; max_uses: number | null; used_count: number;
+  starts_at: string | null; ends_at: string | null; is_active: boolean;
+}
+const emptyCode = {
+  code: '', discount_type: 'percent', discount_value: 10, min_subtotal: 0,
+  max_uses: '' as number | string, starts_at: '', ends_at: '', is_active: true,
+};
 
 interface Banner {
   id: string;
