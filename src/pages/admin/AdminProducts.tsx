@@ -590,24 +590,37 @@ export default function AdminProducts() {
             {categories.length === 0 ? (
               <p className="text-xs text-muted-foreground">No categories yet — create some in <a href="/admin/categories" className="text-primary underline">Categories</a>.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {categories.map((c) => {
-                  const active = editing.category_ids.includes(c.id);
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setEditing({
-                        ...editing,
-                        category_ids: active ? editing.category_ids.filter((id) => id !== c.id) : [...editing.category_ids, c.id]
-                      })}
-                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-background text-muted-foreground hover:border-primary/40'}`}
-                    >
-                      {c.name}
-                    </button>
-                  );
-                })}
-              </div>
+              <>
+                <select
+                  className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background"
+                  value={editing.category_ids[0] || ''}
+                  onChange={(e) => setEditing({ ...editing, category_ids: e.target.value ? [e.target.value] : [] })}
+                >
+                  <option value="">— Select a category —</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">Need multiple categories? Hold Cmd/Ctrl and click the chips below.</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {categories.map((c) => {
+                    const active = editing.category_ids.includes(c.id);
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setEditing({
+                          ...editing,
+                          category_ids: active ? editing.category_ids.filter((id) => id !== c.id) : [...editing.category_ids, c.id]
+                        })}
+                        className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-background text-muted-foreground hover:border-primary/40'}`}
+                      >
+                        {c.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
 
