@@ -5,7 +5,7 @@ import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
 interface ReqBody {
-  mode: "title" | "description" | "tags" | "blog";
+  mode: "title" | "description" | "tags" | "blog" | "all";
   title?: string;
   description?: string;
   productType?: string;
@@ -163,7 +163,43 @@ The blog should include: an engaging hook, what the product is, 3-5 creative use
       });
     }
 
-    return new Response(JSON.stringify({ error: "Unknown mode" }), {
+    if (mode === "all") {
+      const data = await callGemini(
+        [
+          { role: "system", content: `You write SEO-optimized e-commerce product copy for ${brand}` },
+          { role: "user", content: userVisionContent(
+            `Generate complete listing content for a ${productType || "product"}${title ? ` based on this seed title/idea: "${title}"` : ""}${description ? `. Existing notes: ${description.slice(0, 400)}` : ""}.${imageUrl ? " Use the attached product image to inform the copy." : ""} Return: title (max 70 chars), description (80-140 words, warm craft tone, no markdown), 5-8 short lowercase tags, meta_title (max 60 chars), meta_description (max 160 chars).`,
+            imageUrl
+          ) },
+        ],
+        [{
+          type: "function",
+          function: {
+            name: "return_listing",
+            description: "Return complete product listing content",
+            parameters: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                description: { type: "string" },
+                tags: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 10 },
+                meta_title: { type: "string" },
+                meta_description: { type: "string" },
+              },
+              required: ["title", "description", "tags", "meta_title", "meta_description"],
+            },
+          },
+        }],
+        { type: "function", function: { name: "return_listing" } }
+      );
+      const args = data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+      const parsed = args ? JSON.parse(args) : null;
+      if (!parsed) throw new Error("No listing content returned");
+      return new Response(JSON.stringify({ result: parsed }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
