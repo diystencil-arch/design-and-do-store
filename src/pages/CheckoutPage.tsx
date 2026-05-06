@@ -23,6 +23,31 @@ export default function CheckoutPage() {
   const ppRef = useRef<HTMLDivElement>(null);
   const hasPhysical = items.some((i) => i.type === 'physical');
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [promoInput, setPromoInput] = useState('');
+  const [promo, setPromo] = useState<{ code: string; discount: number } | null>(null);
+  const [applyingPromo, setApplyingPromo] = useState(false);
+
+  const sub = subtotal();
+  const discount = promo?.discount || 0;
+  const total = Math.max(0, sub - discount);
+
+  const applyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+    setApplyingPromo(true);
+    const { data } = await supabase.from('promo_codes' as any).select('*').eq('code', code).eq('is_active', true).maybeSingle();
+    setApplyingPromo(false);
+    const c: any = data;
+    if (!c) { toast({ title: 'Invalid promo code', variant: 'destructive' }); return; }
+    const now = new Date();
+    if (c.starts_at && new Date(c.starts_at) > now) { toast({ title: 'Promo not yet active', variant: 'destructive' }); return; }
+    if (c.ends_at && new Date(c.ends_at) < now) { toast({ title: 'Promo expired', variant: 'destructive' }); return; }
+    if (c.max_uses && c.used_count >= c.max_uses) { toast({ title: 'Promo usage limit reached', variant: 'destructive' }); return; }
+    if (sub < Number(c.min_subtotal || 0)) { toast({ title: `Min subtotal $${c.min_subtotal} required`, variant: 'destructive' }); return; }
+    const d = c.discount_type === 'percent' ? sub * (Number(c.discount_value) / 100) : Number(c.discount_value);
+    setPromo({ code: c.code, discount: Math.min(d, sub) });
+    toast({ title: `Promo "${c.code}" applied`, description: `−$${Math.min(d, sub).toFixed(2)}` });
+  };
 
   const payWithStripe = async () => {
     if (!email) { toast({ title: 'Email required', description: 'Please enter your email first.', variant: 'destructive' }); return; }
