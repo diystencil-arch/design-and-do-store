@@ -40,12 +40,43 @@ export default function AdminPromos() {
   const { toast } = useToast();
   const [items, setItems] = useState<Banner[]>([]);
   const [editing, setEditing] = useState<typeof empty & { id?: string } | null>(null);
+  const [codes, setCodes] = useState<PromoCode[]>([]);
+  const [editingCode, setEditingCode] = useState<typeof emptyCode & { id?: string } | null>(null);
 
   const load = async () => {
     const { data } = await supabase.from('promo_banners').select('*').order('sort_order').order('created_at', { ascending: false });
     setItems((data || []) as Banner[]);
+    const { data: cdata } = await supabase.from('promo_codes' as any).select('*').order('created_at', { ascending: false });
+    setCodes((cdata || []) as unknown as PromoCode[]);
   };
   useEffect(() => { load(); }, []);
+
+  const saveCode = async () => {
+    if (!editingCode) return;
+    const code = editingCode.code.trim().toUpperCase();
+    if (!code) { toast({ title: 'Code required', variant: 'destructive' }); return; }
+    const payload: any = {
+      code,
+      discount_type: editingCode.discount_type,
+      discount_value: Number(editingCode.discount_value) || 0,
+      min_subtotal: Number(editingCode.min_subtotal) || 0,
+      max_uses: editingCode.max_uses === '' ? null : Number(editingCode.max_uses),
+      starts_at: editingCode.starts_at || null,
+      ends_at: editingCode.ends_at || null,
+      is_active: editingCode.is_active,
+    };
+    const { error } = editingCode.id
+      ? await supabase.from('promo_codes' as any).update(payload).eq('id', editingCode.id)
+      : await supabase.from('promo_codes' as any).insert(payload);
+    if (error) { toast({ title: 'Error', description: error.message, variant: 'destructive' }); return; }
+    toast({ title: 'Promo code saved' });
+    setEditingCode(null); load();
+  };
+  const removeCode = async (id: string) => {
+    if (!confirm('Delete this promo code?')) return;
+    await supabase.from('promo_codes' as any).delete().eq('id', id);
+    load();
+  };
 
   const save = async () => {
     if (!editing) return;
