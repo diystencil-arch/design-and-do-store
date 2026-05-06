@@ -5,9 +5,8 @@ import { useState } from 'react';
 import CurrencySwitcher from '@/components/CurrencySwitcher';
 import FestivalBanner from '@/components/FestivalBanner';
 import PromoBanner from '@/components/PromoBanner';
-import { useCategories } from '@/hooks/useProducts';
 
-const baseLinks = [
+const navLinks = [
   { to: '/tools', label: 'Tools' },
   { to: '/stencils', label: 'Stencils' },
   { to: '/wood', label: 'Wood' },
@@ -22,13 +21,6 @@ export default function Header() {
   const totalItems = useCartStore((s) => s.totalItems());
   const toggleCart = useCartStore((s) => s.toggleCart);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { categories } = useCategories();
-
-  // Merge static + dynamic category links (avoid duplicates by slug)
-  const dynamicCats = categories
-    .filter((c) => !baseLinks.some((b) => b.to === `/${c.slug}` || b.label.toLowerCase() === c.name.toLowerCase()))
-    .map((c) => ({ to: `/category/${c.slug}`, label: c.name }));
-  const navLinks = [...baseLinks, ...dynamicCats];
 
   return (
     <header className="sticky top-0 z-50 bg-card border-b border-border">
