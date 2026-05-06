@@ -216,6 +216,86 @@ export default function AdminPromos() {
         ))}
         {items.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">No promo banners yet — create your first to drive a campaign.</p>}
       </div>
+
+      {/* Promo Codes */}
+      <div className="mt-12">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="section-heading flex items-center gap-2"><Tag size={20} /> Promo codes</h2>
+            <p className="text-sm text-muted-foreground mt-1">Discount codes customers can redeem at checkout.</p>
+          </div>
+          <button onClick={() => setEditingCode({ ...emptyCode })} className="btn-primary text-sm py-2 px-4"><Plus size={14} /> New code</button>
+        </div>
+
+        {editingCode && (
+          <div className="product-card mb-6 space-y-4 max-w-3xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium">{editingCode.id ? 'Edit promo code' : 'New promo code'}</h3>
+              <button onClick={() => setEditingCode(null)}><X size={18} /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Code *</label>
+                <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background uppercase" placeholder="SAVE10" value={editingCode.code} onChange={(e) => setEditingCode({ ...editingCode, code: e.target.value.toUpperCase() })} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Discount type</label>
+                <select className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editingCode.discount_type} onChange={(e) => setEditingCode({ ...editingCode, discount_type: e.target.value })}>
+                  <option value="percent">Percent (%)</option>
+                  <option value="fixed">Fixed amount</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Value</label>
+                <input type="number" step="0.01" className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editingCode.discount_value} onChange={(e) => setEditingCode({ ...editingCode, discount_value: parseFloat(e.target.value) || 0 })} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Min subtotal</label>
+                <input type="number" step="0.01" className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editingCode.min_subtotal} onChange={(e) => setEditingCode({ ...editingCode, min_subtotal: parseFloat(e.target.value) || 0 })} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Max uses (blank = unlimited)</label>
+                <input type="number" className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editingCode.max_uses as any} onChange={(e) => setEditingCode({ ...editingCode, max_uses: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Starts at</label>
+                <input type="datetime-local" className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editingCode.starts_at?.slice(0, 16) || ''} onChange={(e) => setEditingCode({ ...editingCode, starts_at: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Ends at</label>
+                <input type="datetime-local" className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" value={editingCode.ends_at?.slice(0, 16) || ''} onChange={(e) => setEditingCode({ ...editingCode, ends_at: e.target.value })} />
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={editingCode.is_active} onChange={(e) => setEditingCode({ ...editingCode, is_active: e.target.checked })} /> Active
+            </label>
+            <div className="flex gap-2 pt-2 border-t border-border">
+              <button onClick={saveCode} className="btn-primary text-sm py-2 px-4">Save</button>
+              <button onClick={() => setEditingCode(null)} className="btn-outline text-sm py-2 px-4">Cancel</button>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          {codes.map((c) => (
+            <div key={c.id} className="product-card flex items-center gap-3">
+              <code className="font-mono text-sm font-semibold bg-muted px-2 py-1 rounded">{c.code}</code>
+              <span className="text-sm text-foreground">
+                {c.discount_type === 'percent' ? `${c.discount_value}% off` : `$${c.discount_value} off`}
+                {c.min_subtotal > 0 && ` · min $${c.min_subtotal}`}
+              </span>
+              <span className="text-xs text-muted-foreground ml-auto">Used {c.used_count}{c.max_uses ? `/${c.max_uses}` : ''}</span>
+              <span className={`text-xs px-2 py-1 rounded ${c.is_active ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>{c.is_active ? 'Active' : 'Off'}</span>
+              <button onClick={() => setEditingCode({
+                id: c.id, code: c.code, discount_type: c.discount_type, discount_value: c.discount_value,
+                min_subtotal: c.min_subtotal, max_uses: c.max_uses ?? '', starts_at: c.starts_at || '', ends_at: c.ends_at || '', is_active: c.is_active,
+              })} className="text-muted-foreground hover:text-primary p-1.5"><Edit size={16} /></button>
+              <button onClick={() => removeCode(c.id)} className="text-muted-foreground hover:text-destructive p-1.5"><Trash2 size={16} /></button>
+            </div>
+          ))}
+          {codes.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">No promo codes yet.</p>}
+        </div>
+      </div>
     </AdminLayout>
   );
 }
