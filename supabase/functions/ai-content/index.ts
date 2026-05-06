@@ -200,6 +200,7 @@ The blog should include: an engaging hook, what the product is, 3-5 creative use
       });
     }
 
+    return new Response(JSON.stringify({ error: "Unknown mode" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
