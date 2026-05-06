@@ -239,7 +239,7 @@ export default function AdminProducts() {
     toast({ title: 'File uploaded', description: file.name });
   };
 
-  const callAI = async (mode: 'title' | 'description' | 'tags') => {
+  const callAI = async (mode: 'title' | 'description' | 'tags' | 'all') => {
     if (!editing) return;
     setAiLoading(mode);
     try {
@@ -261,6 +261,16 @@ export default function AdminProducts() {
           ...data.result,
         ]));
         setEditing({ ...editing, tags: newTags.join(', ') });
+      } else if (mode === 'all') {
+        const r = data.result || {};
+        setEditing({
+          ...editing,
+          title: r.title || editing.title,
+          description: r.description || editing.description,
+          tags: Array.isArray(r.tags) ? r.tags.join(', ') : editing.tags,
+          meta_title: r.meta_title || editing.meta_title,
+          meta_description: r.meta_description || editing.meta_description,
+        });
       }
       toast({ title: `AI generated ${mode}` });
     } catch (e: any) {
