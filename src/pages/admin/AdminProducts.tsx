@@ -239,7 +239,7 @@ export default function AdminProducts() {
     toast({ title: 'File uploaded', description: file.name });
   };
 
-  const callAI = async (mode: 'title' | 'description' | 'tags') => {
+  const callAI = async (mode: 'title' | 'description' | 'tags' | 'all') => {
     if (!editing) return;
     setAiLoading(mode);
     try {
@@ -261,6 +261,16 @@ export default function AdminProducts() {
           ...data.result,
         ]));
         setEditing({ ...editing, tags: newTags.join(', ') });
+      } else if (mode === 'all') {
+        const r = data.result || {};
+        setEditing({
+          ...editing,
+          title: r.title || editing.title,
+          description: r.description || editing.description,
+          tags: Array.isArray(r.tags) ? r.tags.join(', ') : editing.tags,
+          meta_title: r.meta_title || editing.meta_title,
+          meta_description: r.meta_description || editing.meta_description,
+        });
       }
       toast({ title: `AI generated ${mode}` });
     } catch (e: any) {
@@ -543,8 +553,14 @@ export default function AdminProducts() {
         <div className="product-card mb-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-medium">{editing.id ? 'Edit product' : 'New product'}</h2>
-            <button onClick={() => setEditing(null)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => callAI('all')} disabled={aiLoading === 'all'} className="btn-outline text-xs py-1.5 px-3 flex items-center gap-1">
+                <Sparkles size={12} /> {aiLoading === 'all' ? 'Generating all…' : 'Generate all with AI'}
+              </button>
+              <button onClick={() => setEditing(null)} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground -mt-2">Tip: enter a quick title or upload an image, then click <strong>Generate all with AI</strong> to fill title, description, tags, and SEO meta in one click.</p>
 
           {/* Title with AI */}
           <div>
@@ -590,24 +606,37 @@ export default function AdminProducts() {
             {categories.length === 0 ? (
               <p className="text-xs text-muted-foreground">No categories yet — create some in <a href="/admin/categories" className="text-primary underline">Categories</a>.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {categories.map((c) => {
-                  const active = editing.category_ids.includes(c.id);
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setEditing({
-                        ...editing,
-                        category_ids: active ? editing.category_ids.filter((id) => id !== c.id) : [...editing.category_ids, c.id]
-                      })}
-                      className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-background text-muted-foreground hover:border-primary/40'}`}
-                    >
-                      {c.name}
-                    </button>
-                  );
-                })}
-              </div>
+              <>
+                <select
+                  className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background"
+                  value={editing.category_ids[0] || ''}
+                  onChange={(e) => setEditing({ ...editing, category_ids: e.target.value ? [e.target.value] : [] })}
+                >
+                  <option value="">— Select a category —</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">Need multiple categories? Hold Cmd/Ctrl and click the chips below.</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {categories.map((c) => {
+                    const active = editing.category_ids.includes(c.id);
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setEditing({
+                          ...editing,
+                          category_ids: active ? editing.category_ids.filter((id) => id !== c.id) : [...editing.category_ids, c.id]
+                        })}
+                        className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${active ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-background text-muted-foreground hover:border-primary/40'}`}
+                      >
+                        {c.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
 

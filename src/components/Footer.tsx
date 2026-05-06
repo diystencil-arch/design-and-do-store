@@ -4,13 +4,22 @@ import { useSiteSettings } from '@/hooks/useSiteSettings';
 // lucide-react does not export brand icons; use inline SVGs below
 
 const socials = [
+  { href: 'https://www.amazon.com/stores/DIYStencil/page/5EDAF99E-0B34-4152-8EA2-D0AF237E4BA0?ref_=cm_sw_r_ud_ast_store_5RXJEFT6KT9Z2YSQV8A5', label: 'Amazon Store', icon: AmazonIcon },
+  { href: 'https://www.etsy.com/shop/diystencilca', label: 'Etsy Shop', icon: EtsyIcon },
   { href: 'https://www.instagram.com/diystencil', label: 'Instagram', icon: InstagramIcon },
   { href: 'https://www.tiktok.com/@diystencilca', label: 'TikTok', icon: TiktokIcon },
   { href: 'https://www.youtube.com/@ResinMold', label: 'YouTube', icon: YoutubeIcon },
   { href: 'https://www.facebook.com/diystencil', label: 'Facebook', icon: FacebookIcon },
   { href: 'https://www.pinterest.com/diystencil', label: 'Pinterest', icon: PinterestIcon },
-  { href: 'https://www.etsy.com/shop/diystencilca', label: 'Etsy', icon: EtsyIcon },
 ];
+
+function AmazonIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M15.93 17.09c-2.05 1.51-5.02 2.32-7.58 2.32-3.59 0-6.83-1.33-9.27-3.54-.19-.17-.02-.41.21-.27 2.64 1.54 5.91 2.46 9.28 2.46 2.28 0 4.78-.47 7.08-1.45.35-.15.64.23.28.48zM16.78 16.13c-.26-.34-1.74-.16-2.4-.08-.2.02-.23-.15-.05-.28 1.18-.83 3.12-.59 3.34-.31.23.28-.06 2.22-1.17 3.15-.17.14-.33.07-.26-.12.25-.62.8-2.02.54-2.36zM14.42 11.5c0 1.13.03 2.07-.54 3.07-.46.81-1.19 1.31-2.01 1.31-1.11 0-1.76-.85-1.76-2.1 0-2.46 2.21-2.91 4.31-2.91v.63zM17.31 17.78a.6.6 0 0 1-.68.07c-.96-.8-1.13-1.17-1.66-1.93-1.59 1.62-2.71 2.1-4.77 2.1-2.43 0-4.33-1.5-4.33-4.5 0-2.34 1.27-3.94 3.07-4.72 1.57-.69 3.76-.81 5.43-1.01v-.37c0-.69.05-1.5-.35-2.1-.36-.53-1.04-.75-1.64-.75-1.11 0-2.1.57-2.34 1.75-.05.26-.24.52-.5.53l-2.79-.3c-.23-.05-.49-.24-.43-.6.64-3.39 3.7-4.41 6.44-4.41 1.4 0 3.23.37 4.34 1.43 1.4 1.32 1.27 3.07 1.27 4.99v4.51c0 1.36.56 1.96 1.09 2.69.19.27.23.58 0 .77l-2.21 1.85z" />
+    </svg>
+  );
+}
 
 function InstagramIcon({ size = 18 }: { size?: number }) {
   return (

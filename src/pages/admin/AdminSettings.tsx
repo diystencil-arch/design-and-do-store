@@ -7,6 +7,7 @@ import { Save } from 'lucide-react';
 const FIELDS: { key: string; label: string; help: string; type?: 'text' | 'textarea' }[] = [
   { key: 'ga_measurement_id', label: 'Google Analytics Measurement ID', help: 'Format: G-XXXXXXXXXX (from analytics.google.com → Admin → Data Streams)' },
   { key: 'gtm_id', label: 'Google Tag Manager ID', help: 'Format: GTM-XXXXXXX (from tagmanager.google.com)' },
+  { key: 'fb_pixel_id', label: 'Facebook Pixel ID', help: 'Numeric ID from Meta Events Manager → Data Sources → Pixel.' },
   { key: 'contact_email', label: 'Contact email (footer)', help: 'Public email shown in the footer' },
   { key: 'blog_ad_html', label: 'Google Ads / AdSense banner HTML (blog pages)', help: 'Paste the full <ins> snippet or <iframe> ad code. Shows at the bottom of every blog post.', type: 'textarea' },
 ];
