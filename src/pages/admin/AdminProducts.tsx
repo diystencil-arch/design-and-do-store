@@ -604,7 +604,12 @@ export default function AdminProducts() {
 
           {/* Slug */}
           <div>
-            <label className="text-xs text-muted-foreground font-medium block mb-1">URL slug — <code>/products/{editing.slug || slugify(editing.title) || 'auto-from-title'}</code></label>
+            <label className="text-xs text-muted-foreground font-medium flex items-center justify-between mb-1">
+              <span>URL slug — <code>/products/{editing.slug || slugify(editing.title) || 'auto-from-title'}</code></span>
+              <button type="button" onClick={aiSlug} disabled={aiLoading === 'slug'} className="text-primary hover:underline flex items-center gap-1">
+                <Sparkles size={12} /> {aiLoading === 'slug' ? 'Generating…' : 'AI generate slug'}
+              </button>
+            </label>
             <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="auto-from-title" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: slugify(e.target.value) })} />
           </div>
 
@@ -937,6 +942,12 @@ export default function AdminProducts() {
             </button>
             <button onClick={() => quickToggle(p, 'is_bestseller')} className={`p-1.5 rounded ${p.is_bestseller ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-muted'}`} title="Toggle bestseller">
               <Flame size={14} />
+            </button>
+            <button onClick={() => setStatus(p, p.status === 'deactivated' ? 'published' : 'deactivated')} className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-destructive hover:border-destructive" title="Deactivate listing">
+              {p.status === 'deactivated' ? 'Activate' : 'Deactivate'}
+            </button>
+            <button onClick={() => setStatus(p, 'draft')} className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground" title="Move to draft">
+              Draft
             </button>
             <button onClick={() => setBlogPanel(p)} className="text-muted-foreground hover:text-primary p-1.5 rounded hover:bg-muted" title="Generate AI blog">
               <Languages size={16} />
