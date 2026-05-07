@@ -1,11 +1,11 @@
-import { Mail, MessageCircle, MapPin, Clock, Send } from 'lucide-react';
+import { Mail, MapPin, Clock, Send } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 const EMAIL = 'diystencil@gmail.com';
-const WHATSAPP = '16475724095';
-const WHATSAPP_DISPLAY = '+1 (647) 572-4095';
+const AMAZON_URL = 'https://www.amazon.com/stores/DIYStencil/page/5EDAF99E-0B34-4152-8EA2-D0AF237E4BA0?ref_=cm_sw_r_ud_ast_store_5RXJEFT6KT9Z2YSQV8A5';
+const ETSY_URL = 'https://www.etsy.com/shop/diystencilca';
 
 export default function ContactPage() {
   const { toast } = useToast();
@@ -44,8 +44,7 @@ export default function ContactPage() {
         <p className="text-sm font-medium text-primary uppercase tracking-wider">Get in touch</p>
         <h1 className="mt-2 text-4xl md:text-5xl font-bold text-foreground">Contact DIY Stencil</h1>
         <p className="mt-4 text-muted-foreground leading-relaxed">
-          Have a question about a product, custom order, or your shipment? We typically reply within 24 hours
-          (Mon–Fri). Fastest response is via WhatsApp.
+          Have a question about a product, custom order, or your shipment? Email us and we typically reply within 24 hours (Mon–Fri).
         </p>
       </header>
 
@@ -53,19 +52,19 @@ export default function ContactPage() {
         {/* Contact info */}
         <aside className="lg:col-span-2 space-y-4">
           <a
-            href={`https://wa.me/${WHATSAPP}`}
+            href={AMAZON_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="block rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary"
           >
             <div className="flex items-start gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366]">
-                <MessageCircle size={20} />
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF9900]/10 text-[#FF9900] font-bold text-lg">
+                A
               </span>
               <div>
-                <h3 className="font-semibold text-foreground">WhatsApp</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{WHATSAPP_DISPLAY}</p>
-                <p className="mt-1 text-xs text-primary font-medium">Tap to chat →</p>
+                <h3 className="font-semibold text-foreground">Visit our Amazon store</h3>
+                <p className="mt-1 text-sm text-muted-foreground">Shop our curated craft picks on Amazon</p>
+                <p className="mt-1 text-xs text-primary font-medium">Shop on Amazon →</p>
               </div>
             </div>
           </a>
