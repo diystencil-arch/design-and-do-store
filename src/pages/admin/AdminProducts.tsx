@@ -446,6 +446,38 @@ export default function AdminProducts() {
     load();
   };
 
+  const setStatus = async (p: Product, status: Status) => {
+    const is_active = status !== 'deactivated' && status !== 'draft';
+    await supabase.from('products').update({ status, is_active }).eq('id', p.id);
+    toast({ title: `Moved to ${status.replace('_', ' ')}` });
+    load();
+  };
+
+  const aiSlug = async () => {
+    if (!editing) return;
+    if (!editing.title.trim()) { toast({ title: 'Add a title first', variant: 'destructive' }); return; }
+    setAiLoading('slug');
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-content', {
+        body: { mode: 'all', title: editing.title, description: editing.description, productType: editing.type },
+      });
+      if (error) throw error;
+      const seedTitle = data?.result?.title || editing.title;
+      setEditing({ ...editing, slug: slugify(seedTitle) });
+      toast({ title: 'AI slug generated' });
+    } catch (e: any) {
+      // Fallback: just slugify the title
+      setEditing({ ...editing, slug: slugify(editing.title) });
+      toast({ title: 'Slug from title' });
+    } finally { setAiLoading(null); }
+  };
+
+  const saveAsDraft = async () => {
+    if (!editing) return;
+    setEditing({ ...editing, status: 'draft' });
+    setTimeout(() => save(), 0);
+  };
+
   const filtered = filter === 'all' ? products : products.filter((p) => p.status === filter);
 
   const exportCSV = () => {
