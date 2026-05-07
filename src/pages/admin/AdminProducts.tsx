@@ -329,11 +329,12 @@ export default function AdminProducts() {
     }
   };
 
-  const save = async () => {
+  const save = async (overrideStatus?: Status) => {
     if (!editing) return;
     if (!editing.title.trim()) { toast({ title: 'Title required', variant: 'destructive' }); return; }
     const slug = slugify(editing.slug || editing.title);
     if (!slug) { toast({ title: 'Could not generate slug', variant: 'destructive' }); return; }
+    const status = overrideStatus || editing.status;
     const payload: any = {
       title: editing.title.trim(),
       slug,
@@ -343,8 +344,8 @@ export default function AdminProducts() {
       description: editing.description,
       tags: editing.tags.split(',').map((t) => t.trim()).filter(Boolean),
       images: editing.images,
-      status: editing.status,
-      is_active: editing.status !== 'deactivated' && editing.status !== 'draft',
+      status,
+      is_active: status !== 'deactivated' && status !== 'draft',
       is_bestseller: editing.is_bestseller,
       is_featured: editing.is_featured,
       is_recommended: editing.is_recommended,
