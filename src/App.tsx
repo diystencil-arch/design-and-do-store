@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
-import WhatsAppButton from "@/components/WhatsAppButton";
+
 import AnalyticsScripts from "@/components/AnalyticsScripts";
 import PromoBanner from "@/components/PromoBanner";
 import Index from "./pages/Index";
@@ -111,7 +111,6 @@ const App = () => (
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </main>
             </main>
             <PromoBanner position="bottom" />
             <Footer />
