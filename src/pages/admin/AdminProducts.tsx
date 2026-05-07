@@ -874,9 +874,16 @@ export default function AdminProducts() {
             </div>
           </details>
 
-          <div className="flex gap-2 pt-2 border-t border-border">
-            <button onClick={save} className="btn-primary text-sm py-2 px-4">Save product</button>
-            <button onClick={() => setEditing(null)} className="btn-outline text-sm py-2 px-4">Cancel</button>
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+            <button onClick={() => save()} className="btn-primary text-sm py-2 px-4">Save product</button>
+            <button onClick={saveAsDraft} className="btn-outline text-sm py-2 px-4">Save as draft</button>
+            {editing.id && (
+              <>
+                <button onClick={() => save('deactivated')} className="btn-outline text-sm py-2 px-4">Deactivate listing</button>
+                <button onClick={() => save('draft')} className="btn-outline text-sm py-2 px-4">Move listing to draft</button>
+              </>
+            )}
+            <button onClick={() => setEditing(null)} className="btn-outline text-sm py-2 px-4 ml-auto">Cancel</button>
           </div>
         </div>
       )}
