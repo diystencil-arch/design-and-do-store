@@ -473,11 +473,7 @@ export default function AdminProducts() {
     } finally { setAiLoading(null); }
   };
 
-  const saveAsDraft = async () => {
-    if (!editing) return;
-    setEditing({ ...editing, status: 'draft' });
-    setTimeout(() => save(), 0);
-  };
+  const saveAsDraft = () => save('draft');
 
   const filtered = filter === 'all' ? products : products.filter((p) => p.status === filter);
 
