@@ -40,18 +40,20 @@ export default function BlogPage() {
       ) : (
         <div className="grid md:grid-cols-3 gap-6">
           {posts.map((post) => (
-            <article key={post.id} className="product-card">
-              {post.cover_image ? (
-                <img src={post.cover_image} alt={post.title} className="aspect-video w-full object-cover rounded-lg mb-4" />
-              ) : (
-                <div className="aspect-video bg-muted rounded-lg mb-4" />
-              )}
-              {post.published_at && (
-                <p className="text-xs text-muted-foreground mb-2">{new Date(post.published_at).toLocaleDateString()}</p>
-              )}
-              <h2 className="text-foreground font-medium mb-2">{post.title}</h2>
-              {post.excerpt && <p className="text-sm text-muted-foreground">{post.excerpt}</p>}
-            </article>
+            <Link to={`/blog/${post.slug}`} key={post.id} className="block">
+              <article className="product-card h-full">
+                {post.cover_image ? (
+                  <img src={post.cover_image} alt={post.title} className="aspect-video w-full object-cover rounded-lg mb-4" />
+                ) : (
+                  <div className="aspect-video bg-muted rounded-lg mb-4" />
+                )}
+                {post.published_at && (
+                  <p className="text-xs text-muted-foreground mb-2">{new Date(post.published_at).toLocaleDateString()}</p>
+                )}
+                <h2 className="text-foreground font-medium mb-2">{post.title}</h2>
+                {post.excerpt && <p className="text-sm text-muted-foreground">{post.excerpt}</p>}
+              </article>
+            </Link>
           ))}
         </div>
       )}

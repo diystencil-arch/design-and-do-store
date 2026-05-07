@@ -329,11 +329,12 @@ export default function AdminProducts() {
     }
   };
 
-  const save = async () => {
+  const save = async (overrideStatus?: Status) => {
     if (!editing) return;
     if (!editing.title.trim()) { toast({ title: 'Title required', variant: 'destructive' }); return; }
     const slug = slugify(editing.slug || editing.title);
     if (!slug) { toast({ title: 'Could not generate slug', variant: 'destructive' }); return; }
+    const status = overrideStatus || editing.status;
     const payload: any = {
       title: editing.title.trim(),
       slug,
@@ -343,8 +344,8 @@ export default function AdminProducts() {
       description: editing.description,
       tags: editing.tags.split(',').map((t) => t.trim()).filter(Boolean),
       images: editing.images,
-      status: editing.status,
-      is_active: editing.status !== 'deactivated' && editing.status !== 'draft',
+      status,
+      is_active: status !== 'deactivated' && status !== 'draft',
       is_bestseller: editing.is_bestseller,
       is_featured: editing.is_featured,
       is_recommended: editing.is_recommended,
@@ -445,6 +446,34 @@ export default function AdminProducts() {
     await supabase.from('products').update(update).eq('id', p.id);
     load();
   };
+
+  const setStatus = async (p: Product, status: Status) => {
+    const is_active = status !== 'deactivated' && status !== 'draft';
+    await supabase.from('products').update({ status, is_active }).eq('id', p.id);
+    toast({ title: `Moved to ${status.replace('_', ' ')}` });
+    load();
+  };
+
+  const aiSlug = async () => {
+    if (!editing) return;
+    if (!editing.title.trim()) { toast({ title: 'Add a title first', variant: 'destructive' }); return; }
+    setAiLoading('slug');
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-content', {
+        body: { mode: 'all', title: editing.title, description: editing.description, productType: editing.type },
+      });
+      if (error) throw error;
+      const seedTitle = data?.result?.title || editing.title;
+      setEditing({ ...editing, slug: slugify(seedTitle) });
+      toast({ title: 'AI slug generated' });
+    } catch (e: any) {
+      // Fallback: just slugify the title
+      setEditing({ ...editing, slug: slugify(editing.title) });
+      toast({ title: 'Slug from title' });
+    } finally { setAiLoading(null); }
+  };
+
+  const saveAsDraft = () => save('draft');
 
   const filtered = filter === 'all' ? products : products.filter((p) => p.status === filter);
 
@@ -575,7 +604,12 @@ export default function AdminProducts() {
 
           {/* Slug */}
           <div>
-            <label className="text-xs text-muted-foreground font-medium block mb-1">URL slug — <code>/products/{editing.slug || slugify(editing.title) || 'auto-from-title'}</code></label>
+            <label className="text-xs text-muted-foreground font-medium flex items-center justify-between mb-1">
+              <span>URL slug — <code>/products/{editing.slug || slugify(editing.title) || 'auto-from-title'}</code></span>
+              <button type="button" onClick={aiSlug} disabled={aiLoading === 'slug'} className="text-primary hover:underline flex items-center gap-1">
+                <Sparkles size={12} /> {aiLoading === 'slug' ? 'Generating…' : 'AI generate slug'}
+              </button>
+            </label>
             <input className="w-full px-3 py-2 border border-border rounded-md text-sm bg-background" placeholder="auto-from-title" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: slugify(e.target.value) })} />
           </div>
 
@@ -845,9 +879,16 @@ export default function AdminProducts() {
             </div>
           </details>
 
-          <div className="flex gap-2 pt-2 border-t border-border">
-            <button onClick={save} className="btn-primary text-sm py-2 px-4">Save product</button>
-            <button onClick={() => setEditing(null)} className="btn-outline text-sm py-2 px-4">Cancel</button>
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+            <button onClick={() => save()} className="btn-primary text-sm py-2 px-4">Save product</button>
+            <button onClick={saveAsDraft} className="btn-outline text-sm py-2 px-4">Save as draft</button>
+            {editing.id && (
+              <>
+                <button onClick={() => save('deactivated')} className="btn-outline text-sm py-2 px-4">Deactivate listing</button>
+                <button onClick={() => save('draft')} className="btn-outline text-sm py-2 px-4">Move listing to draft</button>
+              </>
+            )}
+            <button onClick={() => setEditing(null)} className="btn-outline text-sm py-2 px-4 ml-auto">Cancel</button>
           </div>
         </div>
       )}
@@ -901,6 +942,12 @@ export default function AdminProducts() {
             </button>
             <button onClick={() => quickToggle(p, 'is_bestseller')} className={`p-1.5 rounded ${p.is_bestseller ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-muted'}`} title="Toggle bestseller">
               <Flame size={14} />
+            </button>
+            <button onClick={() => setStatus(p, p.status === 'deactivated' ? 'published' : 'deactivated')} className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-destructive hover:border-destructive" title="Deactivate listing">
+              {p.status === 'deactivated' ? 'Activate' : 'Deactivate'}
+            </button>
+            <button onClick={() => setStatus(p, 'draft')} className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground" title="Move to draft">
+              Draft
             </button>
             <button onClick={() => setBlogPanel(p)} className="text-muted-foreground hover:text-primary p-1.5 rounded hover:bg-muted" title="Generate AI blog">
               <Languages size={16} />

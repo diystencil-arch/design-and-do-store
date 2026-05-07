@@ -23,6 +23,8 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import FreebiePage from "./pages/FreebiePage";
 import BlogPage from "./pages/BlogPage";
+import BlogPostPage from "./pages/BlogPostPage";
+import CatalogPage from "./pages/CatalogPage";
 import AuthPage from "./pages/AuthPage";
 import AccountPage from "./pages/AccountPage";
 import DownloadPage from "./pages/DownloadPage";
@@ -81,6 +83,8 @@ const App = () => (
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/freebie" element={<FreebiePage />} />
                 <Route path="/blog" element={<BlogPage />} />
+                <Route path="/blog/:slug" element={<BlogPostPage />} />
+                <Route path="/catalog" element={<CatalogPage />} />
                 <Route path="/auth" element={<AuthPage />} />
                 <Route path="/login" element={<AuthPage />} />
                 <Route path="/account" element={<AccountPage />} />

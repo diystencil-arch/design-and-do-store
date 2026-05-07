@@ -99,12 +99,12 @@ export default function Footer() {
           <div>
             <h4 className="text-sm font-medium text-foreground mb-3">Shop</h4>
             <div className="flex flex-col gap-2">
+              <Link to="/catalog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Catalog</Link>
               <Link to="/stencils" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Stencils</Link>
               <Link to="/wood" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Wood Cutouts</Link>
               <Link to="/acrylic" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Acrylic Cutouts</Link>
               <Link to="/svg" className="text-sm text-muted-foreground hover:text-foreground transition-colors">SVG Files</Link>
               <Link to="/tools" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Craft Tools</Link>
-              
             </div>
           </div>
           <div>
