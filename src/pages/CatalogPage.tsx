@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import ProductCard from '@/components/ProductCard';
 
@@ -33,9 +32,7 @@ export default function CatalogPage() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {products.map((p) => (
-            <Link key={p.id} to={`/products/${p.slug}`}>
-              <ProductCard product={p as any} />
-            </Link>
+            <ProductCard key={p.id} product={p as any} />
           ))}
         </div>
       )}
