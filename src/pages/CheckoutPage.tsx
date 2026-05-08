@@ -88,7 +88,7 @@ export default function CheckoutPage() {
       createOrder: async () => {
         if (!email) { toast({ title: 'Email required', description: 'Please enter your email first.', variant: 'destructive' }); throw new Error('email'); }
         const { data, error } = await supabase.functions.invoke('paypal-create-order', {
-          body: { items: items.map(i => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity })), currency: 'USD' },
+          body: { items: items.map(i => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity })), currency: 'USD', promoCode: promo?.code || null },
         });
         if (error || !data?.id) throw new Error('Failed to create order');
         return data.id;
@@ -102,6 +102,7 @@ export default function CheckoutPage() {
             email,
             shippingAddress: hasPhysical ? address : null,
             userId: user?.id || null,
+            promoCode: promo?.code || null,
           },
         });
         setProcessing(false);
