@@ -214,3 +214,44 @@ export function useProductsByCategory(categorySlug: string | undefined) {
   }, [categorySlug]);
   return { products, loading };
 }
+
+// Combined hook: returns all active products that are EITHER in a category (by slug) OR match a legacy tag/type filter.
+export function useProductsForSection(opts: { categorySlug?: string; type?: 'affiliate' | 'physical' | 'digital'; tag?: string }) {
+  const [products, setProducts] = useState<DbProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { categorySlug, type, tag } = opts;
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
+      const map = new Map<string, DbProduct>();
+      // 1) Category-based
+      if (categorySlug) {
+        const { data: cat } = await supabase.from('categories').select('id').eq('slug', categorySlug).maybeSingle();
+        if (cat) {
+          const { data } = await supabase
+            .from('product_categories')
+            .select(`product:products(${SELECT})`)
+            .eq('category_id', cat.id);
+          (data || [])
+            .map((r: any) => r.product)
+            .filter((p: any) => p && p.is_active && PUBLIC_STATUSES.includes(p.status))
+            .map(normalize)
+            .forEach((p) => map.set(p.id, p));
+        }
+      }
+      // 2) Legacy tag/type-based
+      if (type) {
+        let q = supabase.from('products').select(SELECT).eq('type', type).eq('is_active', true).in('status', PUBLIC_STATUSES);
+        if (tag) q = q.contains('tags', [tag]);
+        const { data } = await q.order('created_at', { ascending: false });
+        (data || []).map(normalize).forEach((p) => { if (!map.has(p.id)) map.set(p.id, p); });
+      }
+      if (cancelled) return;
+      setProducts(Array.from(map.values()));
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [categorySlug, type, tag]);
+  return { products, loading };
+}
