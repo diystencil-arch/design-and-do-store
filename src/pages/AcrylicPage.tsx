@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
-import { useProductsByType } from '@/hooks/useProducts';
+import { useProductsForSection } from '@/hooks/useProducts';
 
 export default function AcrylicPage() {
-  const { products, loading } = useProductsByType('physical', 'acrylic');
+  const { products, loading } = useProductsForSection({ categorySlug: 'acrylic', type: 'physical', tag: 'acrylic' });
 
   return (
     <div className="container-page py-12 md:py-16">
