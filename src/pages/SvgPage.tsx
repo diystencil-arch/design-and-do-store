@@ -1,8 +1,8 @@
 import ProductCard from '@/components/ProductCard';
-import { useProductsByType } from '@/hooks/useProducts';
+import { useProductsForSection } from '@/hooks/useProducts';
 
 export default function SvgPage() {
-  const { products, loading } = useProductsByType('digital');
+  const { products, loading } = useProductsForSection({ categorySlug: 'svg-files', type: 'digital' });
 
   return (
     <div className="container-page py-10">
