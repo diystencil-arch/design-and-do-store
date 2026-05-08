@@ -446,6 +446,8 @@ export type Database = {
             | null
           paypal_capture_id: string | null
           paypal_order_id: string | null
+          promo_code: string | null
+          promo_discount: number | null
           shipping_address: Json | null
           shipping_cost: number
           status: Database["public"]["Enums"]["order_status"]
@@ -468,6 +470,8 @@ export type Database = {
             | null
           paypal_capture_id?: string | null
           paypal_order_id?: string | null
+          promo_code?: string | null
+          promo_discount?: number | null
           shipping_address?: Json | null
           shipping_cost?: number
           status?: Database["public"]["Enums"]["order_status"]
@@ -490,6 +494,8 @@ export type Database = {
             | null
           paypal_capture_id?: string | null
           paypal_order_id?: string | null
+          promo_code?: string | null
+          promo_discount?: number | null
           shipping_address?: Json | null
           shipping_cost?: number
           status?: Database["public"]["Enums"]["order_status"]
