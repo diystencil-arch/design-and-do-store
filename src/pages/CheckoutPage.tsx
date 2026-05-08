@@ -60,6 +60,7 @@ export default function CheckoutPage() {
         shippingAddress: hasPhysical ? address : null,
         userId: user?.id || null,
         currency: 'usd',
+        promoCode: promo?.code || null,
       },
     });
     setStripeLoading(false);
