@@ -27,7 +27,7 @@ async function getAccessToken() {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   try {
-    const { items, currency = 'USD' } = await req.json();
+    const { items, currency = 'USD', promoCode } = await req.json();
     if (!Array.isArray(items) || items.length === 0) {
       return new Response(JSON.stringify({ error: 'No items' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -57,9 +57,30 @@ Deno.serve(async (req) => {
         category: p.type === 'digital' ? 'DIGITAL_GOODS' : 'PHYSICAL_GOODS',
       });
     }
-    const total = subtotal.toFixed(2);
+
+    // Validate promo
+    let discountAmount = 0;
+    if (promoCode) {
+      const prRes = await fetch(`${SUPABASE_URL}/rest/v1/promo_codes?code=eq.${encodeURIComponent(promoCode)}&is_active=eq.true&select=*`, {
+        headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
+      });
+      const [pc] = await prRes.json();
+      const now = new Date();
+      const valid = pc
+        && (!pc.starts_at || new Date(pc.starts_at) <= now)
+        && (!pc.ends_at || new Date(pc.ends_at) >= now)
+        && (!pc.max_uses || pc.used_count < pc.max_uses)
+        && subtotal >= Number(pc.min_subtotal || 0);
+      if (valid) {
+        const d = pc.discount_type === 'percent' ? subtotal * Number(pc.discount_value) / 100 : Number(pc.discount_value);
+        discountAmount = Math.min(d, subtotal);
+      }
+    }
+    const total = (subtotal - discountAmount).toFixed(2);
 
     const token = await getAccessToken();
+    const breakdown: any = { item_total: { currency_code: currency, value: subtotal.toFixed(2) } };
+    if (discountAmount > 0) breakdown.discount = { currency_code: currency, value: discountAmount.toFixed(2) };
     const orderRes = await fetch(`${PAYPAL_BASE}/v2/checkout/orders`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -69,7 +90,7 @@ Deno.serve(async (req) => {
           amount: {
             currency_code: currency,
             value: total,
-            breakdown: { item_total: { currency_code: currency, value: total } },
+            breakdown,
           },
           items: lineItems,
         }],
