@@ -7,7 +7,6 @@ import FestivalBanner from '@/components/FestivalBanner';
 import PromoBanner from '@/components/PromoBanner';
 
 const navLinks = [
-  { to: '/catalog', label: 'Catalog' },
   { to: '/tools', label: 'Tools' },
   { to: '/stencils', label: 'Stencils' },
   { to: '/wood', label: 'Wood' },

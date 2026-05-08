@@ -1,8 +1,8 @@
 import ProductCard from '@/components/ProductCard';
-import { useProductsByType } from '@/hooks/useProducts';
+import { useProductsForSection } from '@/hooks/useProducts';
 
 export default function StencilsPage() {
-  const { products, loading } = useProductsByType('physical', 'stencil');
+  const { products, loading } = useProductsForSection({ categorySlug: 'stencils', type: 'physical', tag: 'stencil' });
 
   return (
     <div className="container-page py-10">

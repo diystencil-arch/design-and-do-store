@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
-import { useProductsByType } from '@/hooks/useProducts';
+import { useProductsForSection } from '@/hooks/useProducts';
 
 export default function WoodPage() {
-  const { products, loading } = useProductsByType('physical', 'wood');
+  const { products, loading } = useProductsForSection({ categorySlug: 'wood', type: 'physical', tag: 'wood' });
 
   return (
     <div className="container-page py-12 md:py-16">
