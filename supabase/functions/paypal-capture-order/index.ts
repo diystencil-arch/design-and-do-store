@@ -38,7 +38,7 @@ async function sb(path: string, init: RequestInit = {}) {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   try {
-    const { paypalOrderId, items, email, shippingAddress, userId } = await req.json();
+    const { paypalOrderId, items, email, shippingAddress, userId, promoCode } = await req.json();
     if (!paypalOrderId) return new Response(JSON.stringify({ error: 'paypalOrderId required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     const token = await getAccessToken();
@@ -68,6 +68,7 @@ Deno.serve(async (req) => {
       const p = byId[it.productId];
       if (p) subtotal += Number(p.price) * Number(it.quantity || 1);
     }
+    const promoDiscount = Math.max(0, subtotal - amount);
 
     // Create order
     const orderRes = await sb('orders', {
@@ -83,9 +84,22 @@ Deno.serve(async (req) => {
         shipping_cost: 0,
         total: amount,
         shipping_address: shippingAddress || null,
+        promo_code: promoCode || null,
+        promo_discount: promoCode ? promoDiscount : 0,
       }),
     });
     const [order] = await orderRes.json();
+
+    if (promoCode) {
+      const cur = await sb(`promo_codes?code=eq.${encodeURIComponent(promoCode)}&select=used_count`);
+      const [row] = await cur.json();
+      if (row) {
+        await sb(`promo_codes?code=eq.${encodeURIComponent(promoCode)}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ used_count: Number(row.used_count || 0) + 1 }),
+        });
+      }
+    }
 
     // Create order items
     const orderItems = items.map((it: any) => {
