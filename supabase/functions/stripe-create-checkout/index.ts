@@ -24,7 +24,7 @@ async function sb(path: string, init: RequestInit = {}) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { items, email, shippingAddress, userId, currency = "usd" } = await req.json();
+    const { items, email, shippingAddress, userId, currency = "usd", promoCode } = await req.json();
     if (!items?.length) {
       return new Response(JSON.stringify({ error: "items required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -57,10 +57,34 @@ Deno.serve(async (req) => {
       };
     });
 
+    // Server-side promo validation + Stripe coupon
+    let appliedPromo: { code: string; discount: number } | null = null;
+    let discounts: any[] | undefined;
+    if (promoCode) {
+      const prRes = await sb(`promo_codes?code=eq.${encodeURIComponent(promoCode)}&is_active=eq.true&select=*`);
+      const [pc] = await prRes.json();
+      const subtotal = items.reduce((s: number, it: any) => s + Number(byId[it.productId]?.price || 0) * Number(it.quantity || 1), 0);
+      const now = new Date();
+      const valid = pc
+        && (!pc.starts_at || new Date(pc.starts_at) <= now)
+        && (!pc.ends_at || new Date(pc.ends_at) >= now)
+        && (!pc.max_uses || pc.used_count < pc.max_uses)
+        && subtotal >= Number(pc.min_subtotal || 0);
+      if (valid) {
+        const coupon = pc.discount_type === 'percent'
+          ? await stripe.coupons.create({ percent_off: Number(pc.discount_value), duration: 'once', name: pc.code })
+          : await stripe.coupons.create({ amount_off: Math.round(Number(pc.discount_value) * 100), currency, duration: 'once', name: pc.code });
+        discounts = [{ coupon: coupon.id }];
+        const dval = pc.discount_type === 'percent' ? subtotal * Number(pc.discount_value) / 100 : Number(pc.discount_value);
+        appliedPromo = { code: pc.code, discount: Math.min(dval, subtotal) };
+      }
+    }
+
     const origin = req.headers.get("origin") || "";
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
+      ...(discounts ? { discounts } : {}),
       customer_email: email || undefined,
       success_url: `${origin}/order-success?stripe_session={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout`,
@@ -71,6 +95,8 @@ Deno.serve(async (req) => {
         }))),
         shippingAddress: shippingAddress ? JSON.stringify(shippingAddress) : "",
         guestEmail: email || "",
+        promoCode: appliedPromo?.code || "",
+        promoDiscount: appliedPromo ? String(appliedPromo.discount) : "",
       },
     });
 
