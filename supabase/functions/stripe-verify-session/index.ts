@@ -72,6 +72,9 @@ Deno.serve(async (req) => {
       if (p) subtotal += Number(p.price) * Number(it.quantity || 1);
     }
 
+    const promoCode = (meta.promoCode as string) || null;
+    const promoDiscount = meta.promoDiscount ? Number(meta.promoDiscount) : 0;
+
     const orderRes = await sb("orders", {
       method: "POST",
       body: JSON.stringify({
@@ -84,9 +87,23 @@ Deno.serve(async (req) => {
         shipping_cost: 0,
         total: amount,
         shipping_address: shippingAddress,
+        promo_code: promoCode,
+        promo_discount: promoDiscount,
       }),
     });
     const [order] = await orderRes.json();
+
+    if (promoCode) {
+      // Increment usage counter (best-effort)
+      const cur = await sb(`promo_codes?code=eq.${encodeURIComponent(promoCode)}&select=used_count`);
+      const [row] = await cur.json();
+      if (row) {
+        await sb(`promo_codes?code=eq.${encodeURIComponent(promoCode)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ used_count: Number(row.used_count || 0) + 1 }),
+        });
+      }
+    }
 
     const orderItems = items.map((it: any) => {
       const p = byId[it.productId];
