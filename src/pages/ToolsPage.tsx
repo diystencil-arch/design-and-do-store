@@ -1,8 +1,8 @@
 import ProductCard from '@/components/ProductCard';
-import { useProductsByType } from '@/hooks/useProducts';
+import { useProductsForSection } from '@/hooks/useProducts';
 
 export default function ToolsPage() {
-  const { products, loading } = useProductsByType('affiliate');
+  const { products, loading } = useProductsForSection({ categorySlug: 'tools', type: 'affiliate' });
 
   return (
     <div className="container-page py-10">
