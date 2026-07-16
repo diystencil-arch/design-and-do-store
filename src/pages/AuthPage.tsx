@@ -10,6 +10,13 @@ const emailSchema = z.string().trim().email({ message: 'Invalid email' }).max(32
 const passwordSchema = z.string().min(6, { message: 'Password must be at least 6 characters' }).max(72);
 const nameSchema = z.string().trim().min(1, { message: 'Name is required' }).max(100);
 
+function safeNext(next: string | null): string | null {
+  if (!next) return null;
+  // Only allow same-origin relative paths.
+  if (!next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+}
+
 export default function AuthPage() {
   const [params] = useSearchParams();
   const [mode, setMode] = useState<'signin' | 'signup'>(params.get('mode') === 'signup' ? 'signup' : 'signin');
@@ -21,9 +28,12 @@ export default function AuthPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const nextPath = safeNext(params.get('next'));
+  const postAuthTarget = nextPath ?? '/account';
+
   useEffect(() => {
-    if (user) navigate('/account', { replace: true });
-  }, [user, navigate]);
+    if (user) navigate(postAuthTarget, { replace: true });
+  }, [user, navigate, postAuthTarget]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,20 +48,20 @@ export default function AuthPage() {
           email: safeEmail,
           password: safePassword,
           options: {
-            emailRedirectTo: `${window.location.origin}/account`,
+            emailRedirectTo: `${window.location.origin}${postAuthTarget}`,
             data: { full_name: name.trim() },
           },
         });
         if (error) throw error;
         toast({ title: 'Account created', description: 'You are now signed in.' });
-        navigate('/account', { replace: true });
+        navigate(postAuthTarget, { replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: safeEmail,
           password: safePassword,
         });
         if (error) throw error;
-        navigate('/account', { replace: true });
+        navigate(postAuthTarget, { replace: true });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Something went wrong';
@@ -64,7 +74,7 @@ export default function AuthPage() {
   const handleGoogle = async () => {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: `${window.location.origin}/account`,
+      redirect_uri: `${window.location.origin}${postAuthTarget}`,
     });
     if (result.error) {
       toast({ title: 'Google sign-in failed', description: String(result.error), variant: 'destructive' });
