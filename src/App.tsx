@@ -29,6 +29,7 @@ import AuthPage from "./pages/AuthPage";
 import AccountPage from "./pages/AccountPage";
 import DownloadPage from "./pages/DownloadPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
+import OAuthConsent from "./pages/OAuthConsent";
 import WoodPage from "./pages/WoodPage";
 import AcrylicPage from "./pages/AcrylicPage";
 import CategoryPage from "./pages/CategoryPage";
@@ -90,6 +91,7 @@ const App = () => (
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="/download" element={<DownloadPage />} />
                 <Route path="/order-success" element={<OrderSuccessPage />} />
+                <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
                 <Route path="/admin/categories" element={<AdminCategories />} />
