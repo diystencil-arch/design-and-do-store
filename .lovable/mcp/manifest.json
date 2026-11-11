@@ -11,9 +11,9 @@
   },
   "mcp": {
     "server": {
-      "name": "diy-stencil-mcp",
+      "name": "stencil-craft-studio",
       "version": "0.1.0",
-      "title": "DIY Stencil"
+      "title": "Stencil Craft Studio"
     },
     "tools": [
       {
